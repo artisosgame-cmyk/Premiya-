@@ -34,7 +34,7 @@ label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}input,se
 </head>
 <body>
 <div class="app">
-<header><div><h1>Калькулятор премии</h1><div class="sub">главная — инфографика, ввод — во вкладках</div></div><div class="pill">v5.3</div></header>
+<header><div><h1>Калькулятор премии</h1><div class="sub">главная — инфографика, ввод — во вкладках</div></div><div class="pill">v5.4</div></header>
 <main>
 <div id="view-main" class="view active">
   <div class="hero">
@@ -63,15 +63,15 @@ label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}input,se
 
   <section>
     <div class="section-title"><h2>Прогноз по цели</h2><span class="tag" id="mainStatus">—</span></div>
-    <div class="row"><div class="name">Премия при цели</div><div class="value" id="targetPremium">0 ₽</div></div>
-    <div class="row"><div class="name">Разница к текущей</div><div class="value" id="targetDelta">0 ₽</div></div>
+    <div class="row"><div class="name">Примерная премия при цели</div><div class="value" id="targetPremium">0 ₽</div></div>
+    <div class="row"><div class="name">Примерная добавка</div><div class="value" id="targetDelta">0 ₽</div></div>
     <div class="calc-line" id="targetComment">Цель меняется во вкладке “Планы”.</div>
   </section>
 
   <section>
     <div class="section-title"><h2>Примерная добавка к премии</h2><span class="small">до 100% и до цели</span></div>
     <div id="approxAddTable"></div>
-    <div class="calc-line">Это ориентир: без ДК, вкладов, пакетов, мультиполиса и прочего. Точный POS зависит от суммы, срока, ставки, ФЗ, ВИС и POS+КРХ.</div>
+    <div class="calc-line">Это ориентир как в Excel: без ДК, вкладов, пакетов, мультиполиса и прочего. Эта добавка НЕ пересчитывает коэффициент страты и Эксперт. Точный POS зависит от суммы, срока, ставки, ФЗ, ВИС и POS+КРХ.</div>
   </section>
 
   <section>
@@ -256,27 +256,14 @@ function targetCalc(r){
    dkPieces:Math.max(t.dkPieces-r.dkPieces,0),
    ctkAmount:Math.max(t.ctkAmount-r.ctkAmount,0)
  };
- const avgPOSRate=r.posAmount>0?r.posPremium/r.posAmount:0.0389; const addPremium=need.posAmount*avgPOSRate+need.krh*100+need.startKRH*500+need.subs*500+need.debit*100+need.dkPieces*1500;
- const sPOS=strataDefault(t.posAmount,k.planPOS);
- const sFZ=strataFZ(r.fzPenetration,k.planFZ);
- const sCTK=strataDefault(t.ctkAmount,k.planCTK);
- const sStart=strataDefault(t.startKRH,k.planStart);
- let chp=0;
- chp+=t.krh>=k.planKRH?-1:2;
- if(k.takeRateFact===0)chp+=-0.5;else if(k.takeRateFact>1)chp+=1;
- chp+=t.subs>=k.planSubs?-1:1;
- chp+=t.posPieces>=k.planPOSPieces?-1:1;
- chp+=t.dkPieces>=2?-4:(t.dkPieces===1?-1:2);
- chp+=t.protection>=k.planProtection?-1:(t.protection<80?2:0);
- chp+=t.debit>=k.planDebit?-1:(t.debit===0?1:0);
- chp+=num(k.fraudFact)*0.5;
- if(num(k.csiFact))chp+=num(k.csiFact)>=4.67?-0.5:(num(k.csiFact)<4?0.5:0);
- const mainSum=sPOS+sFZ+sCTK+sStart;
- const finalStrata=aggregateStrata(mainSum+chp);
- const coef=coefficient(finalStrata);
- const expert=k.includeExpert&&finalStrata<=3?20000:0;
- const total=(r.base+addPremium)*coef+expert;
- return{target:t,need,addPremium,sPOS,sFZ,sCTK,sStart,mainSum,finalStrata,coef,total,delta:total-r.total,chp};
+ const avgPOSRate=r.posAmount>0?r.posPremium/r.posAmount:0.0389;
+
+ // Для главного прогноза используем такую же логику, как в блоке "Примерная добавка":
+ // без ДК, вкладов, пакетов, мультиполиса и без пересчёта коэффициента/Эксперта.
+ const addPremium=need.posAmount*avgPOSRate+need.krh*100+need.startKRH*500+need.subs*500+need.debit*100;
+
+ const total=r.total+addPremium;
+ return{target:t,need,addPremium,total,delta:addPremium};
 }
 
 function infoBar(title,fact,plan,suffix){
@@ -434,9 +421,9 @@ function renderMain(){
  if(t.need.startKRH>0) parts.push(`Старт КРХ: +${t.need.startKRH}`);
  if(t.need.subs>0) parts.push(`Подписки: +${t.need.subs}`);
  if(t.need.debit>0) parts.push(`Дебет: +${t.need.debit}`);
- if(t.need.dkPieces>0) parts.push(`ДК: +${t.need.dkPieces}`);
+ if(t.need.dkPieces>0) parts.push(`ДК: +${t.need.dkPieces} (влияет на ЧП, не входит в примерную добавку)`);
  if(r.fzPenetration<k.planFZ) parts.push(`ФЗ: до нормы ${pct(k.planFZ-r.fzPenetration)}`);
- setText("targetComment", parts.length ? `При цели ${k.targetPercent}% нужно добрать: `+parts.join(" · ") : `Цель ${k.targetPercent}% по основным блокам уже закрыта.`);
+ setText("targetComment", parts.length ? `Примерная добавка считается только по POS, КРХ, стартам, подпискам и дебету. До цели ${k.targetPercent}%: `+parts.join(" · ") : `Цель ${k.targetPercent}% по основным блокам уже закрыта.`);
  setHTML("approxAddTable", renderApproxAddTable(r,t));
  setHTML("needList", parts.length ? parts.map((x,i)=>`<div class="reco"><div class="dot">${i+1}</div><div>${x}</div></div>`).join("") : `<div class="hint">По текущим значениям цель закрыта. Можно поднять цель прогноза во вкладке “Планы”.</div>`);
  setText("sumPOSPremium",money(r.posPremium));
