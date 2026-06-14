@@ -34,7 +34,7 @@ label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}input,se
 </head>
 <body>
 <div class="app">
-<header><div><h1>Калькулятор премии</h1><div class="sub">главная — инфографика, ввод — во вкладках</div></div><div class="pill">v5.2</div></header>
+<header><div><h1>Калькулятор премии</h1><div class="sub">главная — инфографика, ввод — во вкладках</div></div><div class="pill">v5.3</div></header>
 <main>
 <div id="view-main" class="view active">
   <div class="hero">
@@ -66,6 +66,12 @@ label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}input,se
     <div class="row"><div class="name">Премия при цели</div><div class="value" id="targetPremium">0 ₽</div></div>
     <div class="row"><div class="name">Разница к текущей</div><div class="value" id="targetDelta">0 ₽</div></div>
     <div class="calc-line" id="targetComment">Цель меняется во вкладке “Планы”.</div>
+  </section>
+
+  <section>
+    <div class="section-title"><h2>Примерная добавка к премии</h2><span class="small">до 100% и до цели</span></div>
+    <div id="approxAddTable"></div>
+    <div class="calc-line">Это ориентир: без ДК, вкладов, пакетов, мультиполиса и прочего. Точный POS зависит от суммы, срока, ставки, ФЗ, ВИС и POS+КРХ.</div>
   </section>
 
   <section>
@@ -250,7 +256,7 @@ function targetCalc(r){
    dkPieces:Math.max(t.dkPieces-r.dkPieces,0),
    ctkAmount:Math.max(t.ctkAmount-r.ctkAmount,0)
  };
- const addPremium=need.posAmount*0.035+need.krh*100+need.startKRH*500+need.subs*350+need.debit*100+need.dkPieces*1500;
+ const avgPOSRate=r.posAmount>0?r.posPremium/r.posAmount:0.0389; const addPremium=need.posAmount*avgPOSRate+need.krh*100+need.startKRH*500+need.subs*500+need.debit*100+need.dkPieces*1500;
  const sPOS=strataDefault(t.posAmount,k.planPOS);
  const sFZ=strataFZ(r.fzPenetration,k.planFZ);
  const sCTK=strataDefault(t.ctkAmount,k.planCTK);
@@ -327,6 +333,82 @@ function renderStrataDetails(r){
   `;
 }
 
+
+function renderApproxAddTable(r,t){
+  const k=state.kpi;
+  const target = num(k.targetPercent)/100 || 1;
+
+  const avgPOSRate = r.posAmount > 0 ? r.posPremium / r.posAmount : 0.0389;
+
+  const pos100Need = Math.max(k.planPOS - r.posKPIAmount, 0);
+  const posTargetNeed = Math.max(k.planPOS * target - r.posKPIAmount, 0);
+
+  const krh100Need = Math.max(k.planKRH - r.krh, 0);
+  const krhTargetNeed = Math.max(Math.ceil(k.planKRH * target) - r.krh, 0);
+
+  const start100Need = Math.max(k.planStart - r.startKRH, 0);
+  const startTargetNeed = Math.max(Math.ceil(k.planStart * target) - r.startKRH, 0);
+
+  const subs100Need = Math.max(k.planSubs - r.subs, 0);
+  const subsTargetNeed = Math.max(Math.ceil(k.planSubs * target) - r.subs, 0);
+
+  const debit100Need = Math.max(k.planDebit - r.debit, 0);
+  const debitTargetNeed = Math.max(Math.ceil(k.planDebit * target) - r.debit, 0);
+
+  const rows = [
+    {
+      name:"POS сумма",
+      rate:(avgPOSRate*100).toFixed(2).replace(".",",")+"%",
+      add100:pos100Need*avgPOSRate,
+      addTarget:posTargetNeed*avgPOSRate,
+      how:"остаток POS × средняя ставка POS"
+    },
+    {
+      name:"КРХ с лимитом",
+      rate:"100 ₽",
+      add100:krh100Need*100,
+      addTarget:krhTargetNeed*100,
+      how:"остаток КРХ × 100 ₽"
+    },
+    {
+      name:"Старт КРХ",
+      rate:"500 ₽",
+      add100:start100Need*500,
+      addTarget:startTargetNeed*500,
+      how:"остаток стартов × 500 ₽"
+    },
+    {
+      name:"Подписки",
+      rate:"500 ₽",
+      add100:subs100Need*500,
+      addTarget:subsTargetNeed*500,
+      how:"остаток подписок × средняя премия"
+    },
+    {
+      name:"Дебетовые карты",
+      rate:"100 ₽",
+      add100:debit100Need*100,
+      addTarget:debitTargetNeed*100,
+      how:"остаток дебета × средняя премия"
+    }
+  ];
+
+  const total100 = rows.reduce((s,x)=>s+x.add100,0);
+  const totalTarget = rows.reduce((s,x)=>s+x.addTarget,0);
+
+  return rows.map(x=>`
+    <div class="row">
+      <div class="name">${x.name}<br><span class="small">${x.how}</span></div>
+      <div class="value">${x.rate}<br><span class="small">до 100% ${money(x.add100)} · цель ${money(x.addTarget)}</span></div>
+    </div>
+  `).join("") + `
+    <div class="row">
+      <div class="name"><b>Итого добавка</b><br><span class="small">без ДК, вкладов, пакетов, мультиполиса и прочего</span></div>
+      <div class="value"><b>${money(total100)}</b><br><span class="small">цель ${money(totalTarget)}</span></div>
+    </div>
+  `;
+}
+
 function renderMain(){
  const r=calc(), t=targetCalc(r), k=state.kpi;
  setText("totalPremium",money(r.total));
@@ -355,6 +437,7 @@ function renderMain(){
  if(t.need.dkPieces>0) parts.push(`ДК: +${t.need.dkPieces}`);
  if(r.fzPenetration<k.planFZ) parts.push(`ФЗ: до нормы ${pct(k.planFZ-r.fzPenetration)}`);
  setText("targetComment", parts.length ? `При цели ${k.targetPercent}% нужно добрать: `+parts.join(" · ") : `Цель ${k.targetPercent}% по основным блокам уже закрыта.`);
+ setHTML("approxAddTable", renderApproxAddTable(r,t));
  setHTML("needList", parts.length ? parts.map((x,i)=>`<div class="reco"><div class="dot">${i+1}</div><div>${x}</div></div>`).join("") : `<div class="hint">По текущим значениям цель закрыта. Можно поднять цель прогноза во вкладке “Планы”.</div>`);
  setText("sumPOSPremium",money(r.posPremium));
  setText("sumProductsPremium",money(r.productsPremium));
