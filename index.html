@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Премия">
+<title>Калькулятор премии</title>
+<style>
+:root{--bg:#f7f4ef;--card:#fff;--soft:#f0e9dc;--line:#e7dfd1;--text:#191919;--muted:#77736b;--dark:#24201a;--good:#188a52;--warn:#c58316;--bad:#c13a36;--shadow:0 16px 40px rgba(43,35,22,.1)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,Arial,sans-serif;padding:max(14px,env(safe-area-inset-top)) 14px max(92px,env(safe-area-inset-bottom))}
+.app{max-width:560px;margin:0 auto}
+header{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin:7px 2px 18px}
+h1{font-size:28px;line-height:1.05;letter-spacing:-.7px;margin:0}.sub{font-size:13px;color:var(--muted);margin-top:5px}.pill{border:1px solid var(--line);background:#ffffffaa;border-radius:999px;padding:8px 10px;font-size:12px;color:var(--muted)}
+.view{display:none}.view.active{display:block}
+.hero{background:linear-gradient(145deg,#302a20,#171716);color:white;border-radius:31px;padding:22px;box-shadow:var(--shadow)}.label{font-size:13px;opacity:.72}.money{font-size:43px;font-weight:850;line-height:1.04;letter-spacing:-1.4px;margin:8px 0}.note{font-size:13px;opacity:.75}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}.metric{background:#fff;border:1px solid var(--line);border-radius:21px;padding:13px 10px;box-shadow:0 9px 24px rgba(38,31,21,.055)}.metric .k{font-size:12px;color:var(--muted)}.metric .v{font-size:20px;font-weight:850;margin-top:5px}
+section{background:#fff;border:1px solid var(--line);border-radius:24px;box-shadow:0 10px 28px rgba(38,31,21,.055);padding:17px;margin:12px 0}
+.section-title{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:14px}h2{font-size:18px;margin:0;letter-spacing:-.3px}.small{font-size:12px;color:var(--muted)}.tag{border-radius:999px;padding:5px 9px;background:#f1e9da;font-size:12px;font-weight:750;white-space:nowrap}
+.row{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid var(--line)}.row:first-child{border-top:0;padding-top:0}.name{font-size:14px;color:#383530}.value{font-weight:800;text-align:right}
+.bar{height:9px;background:#eee7da;border-radius:99px;overflow:hidden;margin:9px 0 3px}.fill{height:100%;background:var(--dark);border-radius:99px}.fill.good{background:var(--good)}.fill.warn{background:var(--warn)}.fill.bad{background:var(--bad)}
+.progress-item{padding:11px 0;border-top:1px solid var(--line)}.progress-item:first-child{border-top:0}.progress-top,.progress-bottom{display:flex;justify-content:space-between;gap:8px}.progress-top{font-size:14px}.progress-top b{font-size:14px}.progress-bottom{font-size:12px;color:var(--muted)}
+.tabs{position:fixed;left:0;right:0;bottom:0;background:rgba(247,244,239,.88);backdrop-filter:blur(18px);border-top:1px solid rgba(226,217,202,.85);padding:8px 10px max(8px,env(safe-area-inset-bottom));z-index:100}.tabbar{max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+button{border:0;border-radius:16px;background:var(--dark);color:white;padding:12px 14px;font-size:15px;font-weight:800}.tab{background:transparent;color:var(--muted);padding:9px 2px;font-size:10.5px}.tab.active{background:#fff;color:var(--text);box-shadow:0 8px 22px rgba(38,31,21,.09)}button.secondary{background:#eee7da;color:#332b21}button.ghost{background:transparent;color:#332b21;border:1px solid var(--line)}.btns{display:flex;gap:10px;flex-wrap:wrap}
+label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}input,select{width:100%;border:1px solid var(--line);background:#fbfaf7;border-radius:15px;padding:12px 11px;font-size:15px;color:var(--text);outline:none}input:focus,select:focus{border-color:#bca77e;box-shadow:0 0 0 4px rgba(188,167,126,.14)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.full{grid-column:1/-1}.hint{font-size:13px;color:var(--muted);line-height:1.45;background:var(--soft);border-radius:18px;padding:13px}
+.card{background:#fbfaf7;border:1px solid var(--line);border-radius:22px;padding:14px;margin:10px 0}.card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:12px}.card-head b{font-size:16px}.card-head span{font-size:12px;color:var(--muted)}.remove{background:transparent;color:var(--bad);padding:4px;font-size:13px}
+.switches{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.switch{display:flex;align-items:center;justify-content:space-between;gap:8px;background:white;border:1px solid var(--line);border-radius:15px;padding:10px;font-size:13px}.switch input{width:auto}
+.calc-line{font-size:12px;color:var(--muted);line-height:1.35;margin-top:10px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px}.calc-line b{color:var(--text)}
+.product-table{display:grid;gap:9px}.prod-row{display:grid;grid-template-columns:1fr 80px 92px;gap:8px;align-items:center;background:#fbfaf7;border:1px solid var(--line);border-radius:16px;padding:10px}.prod-title{font-size:13px;font-weight:750;line-height:1.2}.prod-sub{font-size:11px;color:var(--muted);margin-top:3px}.prod-premium{font-size:13px;font-weight:800;text-align:right}
+.group-title{font-size:13px;color:var(--muted);font-weight:850;margin:16px 0 7px}
+.reco{display:flex;gap:10px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--line)}.reco:first-child{border-top:0}.dot{width:22px;height:22px;min-width:22px;border-radius:50%;background:#efe2c0;color:#6b4e07;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:850}.footer{font-size:12px;color:var(--muted);line-height:1.45;text-align:center;margin:18px 7px}
+.ok{color:var(--good)}.warn{color:var(--warn)}.bad{color:var(--bad)}
+@media(max-width:390px){.money{font-size:36px}.metric .v{font-size:17px}.prod-row{grid-template-columns:1fr 70px 82px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header><div><h1>Калькулятор премии</h1><div class="sub">принцип Excel: одна строка = один кредит / продукт</div></div><div class="pill">v3</div></header>
+
+<main>
+<div id="view-main" class="view active">
+  <div class="hero"><div class="label">Полная фактическая премия</div><div class="money" id="totalPremium">0 ₽</div><div class="note" id="formulaText">База × коэффициент + Эксперт</div></div>
+  <div class="grid3"><div class="metric"><div class="k">Страта</div><div class="v" id="finalStrata">—</div></div><div class="metric"><div class="k">Коэф.</div><div class="v" id="coef">—</div></div><div class="metric"><div class="k">Эксперт</div><div class="v" id="expertPremium">—</div></div></div>
+  <section><div class="section-title"><h2>Итоги по блокам</h2><span class="tag" id="mainStatus">—</span></div><div class="row"><div class="name">POS премия</div><div class="value" id="sumPOSPremium">0 ₽</div></div><div class="row"><div class="name">Продукты</div><div class="value" id="sumProductsPremium">0 ₽</div></div><div class="row"><div class="name">ДК</div><div class="value" id="sumDKPremium">0 ₽</div></div><div class="row"><div class="name">База до коэффициента</div><div class="value" id="basePremium">0 ₽</div></div></section>
+  <section><div class="section-title"><h2>Выполнение</h2><span class="small">факт / план</span></div><div id="progressList"></div></section>
+</div>
+
+<div id="view-pos" class="view">
+  <section>
+    <div class="section-title"><h2>POS кредиты</h2><button onclick="addPOS()">+ POS</button></div>
+    <div class="hint">Как в Excel: каждая карточка — отдельный POS. Премия = МИН(сумма × ставка из справочника; 4 500 ₽) + ВИС 250 ₽ + комплекс POS+КРХ 300 ₽.</div>
+    <div id="posList"></div>
+  </section>
+</div>
+
+<div id="view-products" class="view">
+  <section>
+    <div class="section-title"><h2>Продукты</h2><span class="small">как лист “Продукты ввод”</span></div>
+    <div class="product-table" id="productList"></div>
+  </section>
+</div>
+
+<div id="view-dk" class="view">
+  <section>
+    <div class="section-title"><h2>Денежные кредиты</h2><button onclick="addDK()">+ ДК</button></div>
+    <div class="hint">Одна строка = одна заявка ДК. Премия считается по виду ДК: либо процент от суммы с лимитом 5 000 ₽, либо фикс.</div>
+    <div id="dkList"></div>
+  </section>
+</div>
+
+<div id="view-kpi" class="view">
+  <section>
+    <div class="section-title"><h2>Планы и ЧП</h2><span class="small">настройки</span></div>
+    <div class="form-grid">
+      <div><label>POS сумма, ₽</label><input id="planPOS" type="number"></div>
+      <div><label>POS шт.</label><input id="planPOSPieces" type="number"></div>
+      <div><label>ФЗ норма</label><input id="planFZ" type="number" step="0.01"></div>
+      <div><label>ЦТК сумма, ₽</label><input id="planCTK" type="number"></div>
+      <div><label>Старт КРХ</label><input id="planStart" type="number"></div>
+      <div><label>КРХ план</label><input id="planKRH" type="number"></div>
+      <div><label>Подписки</label><input id="planSubs" type="number"></div>
+      <div><label>ДК шт.</label><input id="planDKPieces" type="number"></div>
+      <div><label>Пакет защиты, %</label><input id="planProtection" type="number" step="0.01"></div>
+      <div><label>Вклады</label><input id="planDeposits" type="number"></div>
+      <div><label>Дебет</label><input id="planDebit" type="number"></div>
+      <div><label>ДК сумма, ₽</label><input id="planDKAmount" type="number"></div>
+      <div><label>Take rate факт</label><input id="takeRateFact" type="number" step="0.01"></div>
+      <div><label>CSI факт</label><input id="csiFact" type="number" step="0.01"></div>
+      <div><label>ФРОД / мисселинг</label><input id="fraudFact" type="number" step="1"></div>
+      <div><label>Цель прогноза, %</label><input id="targetPercent" type="number"></div>
+      <div class="full switch"><span>Учитывать Эксперт 20 000 ₽</span><input id="includeExpert" type="checkbox"></div>
+    </div>
+  </section>
+  <section><div class="section-title"><h2>Что добить</h2></div><div id="recoList"></div></section>
+  <section><div class="section-title"><h2>Действия</h2></div><div class="btns"><button onclick="saveData()">Сохранить</button><button class="secondary" onclick="resetData()">Вернуть пример</button><button class="ghost" onclick="copySummary()">Скопировать итог</button></div><p class="footer">Данные сохраняются в Safari на твоём iPhone. GitHub хранит только код сайта.</p></section>
+</div>
+</main>
+</div>
+
+<div class="tabs"><div class="tabbar"><button class="tab active" data-view="main">Главная</button><button class="tab" data-view="pos">POS</button><button class="tab" data-view="products">Продукты</button><button class="tab" data-view="dk">ДК</button><button class="tab" data-view="kpi">Планы</button></div></div>
+
+<script>
+const POS_RATES = {"39%": {"value": 0.39, "rates": [0.017, 0.009, 0.026, 0.017, 0.031, 0.019, 0.048, 0.021, 0.051, 0.023, 0.055, 0.025]}, "32%": {"value": 0.32, "rates": [0.017, 0.009, 0.026, 0.017, 0.031, 0.019, 0.048, 0.021, 0.051, 0.023, 0.055, 0.025]}, "29,9%": {"value": 0.299, "rates": [0.016, 0.008, 0.025, 0.016, 0.03, 0.019, 0.042, 0.021, 0.049, 0.023, 0.053, 0.025]}, "26%": {"value": 0.26, "rates": [0.012, 0.005, 0.02, 0.01, 0.021, 0.011, 0.033, 0.02, 0.04, 0.021, 0.044, 0.022]}, "25%": {"value": 0.25, "rates": [0.011, 0.004, 0.019, 0.009, 0.02, 0.01, 0.027, 0.011, 0.035, 0.012, 0.039, 0.013]}, "23%": {"value": 0.23, "rates": [0.007, 0.002, 0.012, 0.005, 0.018, 0.011, 0.02, 0.011, 0.025, 0.011, 0.03, 0.011]}, "21%": {"value": 0.21, "rates": [0.005, 0.001, 0.009, 0.0015, 0.01, 0.002, 0.013, 0.005, 0.018, 0.008, 0.02, 0.009]}, "20%": {"value": 0.2, "rates": [0.005, 0.001, 0.008, 0.0015, 0.009, 0.002, 0.012, 0.005, 0.017, 0.007, 0.019, 0.008]}, "19%": {"value": 0.19, "rates": [0, 0, 0.004, 0.001, 0.005, 0.0015, 0.01, 0.0045, 0.013, 0.0065, 0.016, 0.0075]}, "18%": {"value": 0.18, "rates": [0, 0, 0.003, 0.0005, 0.004, 0.001, 0.008, 0.004, 0.01, 0.006, 0.015, 0.007]}, "17%": {"value": 0.17, "rates": [0, 0, 0.002, 0.0002, 0.003, 0.0005, 0.007, 0.0035, 0.009, 0.0055, 0.014, 0.0065]}, "16%": {"value": 0.16, "rates": [0, 0, 0.001, 0.0001, 0.002, 0.0005, 0.006, 0.003, 0.008, 0.005, 0.013, 0.006]}, "0x0x6 25,36%": {"value": 0.2536, "rates": [0.005, 0.001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, "0x0x12 24,28%": {"value": 0.2428, "rates": [0, 0, 0, 0, 0.012, 0.002, 0, 0, 0, 0, 0, 0]}, "0x0x24 18,57%": {"value": 0.1857, "rates": [0, 0, 0, 0, 0, 0, 0, 0, 0.016, 0.002, 0, 0]}};
+const PRODUCT_DEFAULTS = [{"section": "Карты Халва", "name": "КРХ с лимитом", "qty": 7, "rate": 100, "hint": "100 ₽ за карту"}, {"section": "Карты Халва", "name": "КРХ 0.1 с транзакцией", "qty": 0, "rate": 100, "hint": "100 ₽ за карту"}, {"section": "Карты Халва", "name": "Старт КРХ / транзакция", "qty": 6, "rate": 500, "hint": "500 ₽ за старт/транзакцию"}, {"section": "Подписки", "name": "Халва.Десятка годовая", "qty": 4, "rate": 500, "hint": "500 ₽ за подписку"}, {"section": "Подписки", "name": "Халва.Десятка ежемесячная / Все и везде", "qty": 0, "rate": 200, "hint": "200 ₽ за подписку"}, {"section": "Подписки", "name": "Оптима годовая", "qty": 0, "rate": 500, "hint": "500 ₽ за подписку"}, {"section": "Подписки", "name": "Оптима ежемесячная", "qty": 0, "rate": 300, "hint": "300 ₽ за подписку"}, {"section": "Дебет / вклады", "name": "Дебетовая карта с % на остаток", "qty": 0, "rate": 250, "hint": "250 ₽ за оформление"}, {"section": "Дебет / вклады", "name": "Дебетовая карта с кешбеком 2%", "qty": 1, "rate": 100, "hint": "100 ₽ за оформление"}, {"section": "Дебет / вклады", "name": "Дебетовая КРХ резидента", "qty": 0, "rate": 100, "hint": "100 ₽ за оформление"}, {"section": "Дебет / вклады", "name": "Дебетовая КРХ нерезидента + годовая подписка", "qty": 0, "rate": 700, "hint": "700 ₽ за оформление"}, {"section": "Дебет / вклады", "name": "Дебетовая КРХ нерезидента + ежемесячная подписка", "qty": 0, "rate": 200, "hint": "200 ₽ за оформление"}, {"section": "Дебет / вклады", "name": "Оформление вклада", "qty": 0, "rate": 200, "hint": "200 ₽ за оформление"}, {"section": "КП Мультиполис", "name": "Мультиполис 1 999", "qty": 0, "rate": 200, "hint": "200 ₽ за мультиполис"}, {"section": "КП Мультиполис", "name": "Мультиполис 2 999", "qty": 0, "rate": 400, "hint": "400 ₽ за мультиполис"}, {"section": "КП Мультиполис", "name": "Мультиполис 3 999", "qty": 0, "rate": 500, "hint": "500 ₽ за мультиполис"}, {"section": "Пакеты с защитой", "name": "FIS: пакет 2 / 9 999", "qty": 0, "rate": 700, "hint": "700 ₽ за пакет"}, {"section": "Пакеты с защитой", "name": "FIS: пакет 3 / 14 999", "qty": 0, "rate": 750, "hint": "750 ₽ за пакет"}, {"section": "Пакеты с защитой", "name": "FIS: пакет 4 / 19 999", "qty": 0, "rate": 1000, "hint": "1000 ₽ за пакет"}, {"section": "Пакеты с защитой", "name": "FIS: пакет 5 / 29 999", "qty": 0, "rate": 1700, "hint": "1700 ₽ за пакет"}, {"section": "Пакеты с защитой", "name": "FIS: пакет 6 / 39 999", "qty": 0, "rate": 2000, "hint": "2000 ₽ за пакет"}, {"section": "Пакеты с защитой", "name": "FIS: пакет 7 / 49 999", "qty": 0, "rate": 2500, "hint": "2500 ₽ за пакет"}, {"section": "Пакеты с защитой", "name": "FIS: пакет 8 / 59 999", "qty": 0, "rate": 3000, "hint": "3000 ₽ за пакет"}, {"section": "Пакеты с защитой", "name": "FIS: пакет 9 / 69 999", "qty": 0, "rate": 3500, "hint": "3500 ₽ за пакет"}, {"section": "Пакеты с защитой", "name": "FIS: пакет 10 / 79 999", "qty": 0, "rate": 4000, "hint": "4000 ₽ за пакет"}, {"section": "Пакеты с защитой", "name": "Кредит с ФЗ+ТП: пакет 1 / 4 999", "qty": 0, "rate": 500, "hint": "500 ₽ за пакет"}, {"section": "Пакеты с защитой", "name": "Кредит с ФЗ+ТП: пакет 2 / 9 999", "qty": 0, "rate": 1000, "hint": "1000 ₽ за пакет"}, {"section": "Пакеты с защитой", "name": "Кредит с ФЗ+ТП: пакет 3 / 14 999", "qty": 0, "rate": 1500, "hint": "1500 ₽ за пакет"}, {"section": "Пакеты с защитой", "name": "Кредит с ФЗ+ТП: пакет 4 / 19 999", "qty": 0, "rate": 2000, "hint": "2000 ₽ за пакет"}, {"section": "Пакеты с защитой", "name": "Кредит с ФЗ+ТП: пакет 5 / 29 999", "qty": 0, "rate": 3000, "hint": "3000 ₽ за пакет"}, {"section": "Пакеты с защитой", "name": "Кредит с ФЗ+ТП: пакет 6 / 39 999", "qty": 0, "rate": 4000, "hint": "4000 ₽ за пакет"}, {"section": "Пакеты с защитой", "name": "Кредит с ФЗ+ТП: пакет 7 / 49 999", "qty": 0, "rate": 5000, "hint": "5000 ₽ за пакет"}, {"section": "Пакеты с защитой", "name": "Кредит с ФЗ+ТП: пакет 8 / 59 999", "qty": 0, "rate": 6000, "hint": "6000 ₽ за пакет"}, {"section": "Пакеты с защитой", "name": "Кредит с ФЗ+ТП: пакет 9 / 69 999", "qty": 0, "rate": 7000, "hint": "7000 ₽ за пакет"}, {"section": "Пакеты с защитой", "name": "Кредит с ФЗ+ТП: пакет 10 / 79 999", "qty": 0, "rate": 8000, "hint": "8000 ₽ за пакет"}];
+const DK_TYPES = [{"name": "ДК / ДКПЗА через FIS с ФЗ", "rate": 0.015, "fixed": 0, "limit": 5000, "inPOS": true}, {"name": "КНК через ЛИД только с ФЗ", "rate": 0.01, "fixed": 0, "limit": 5000, "inPOS": true}, {"name": "КНК зарплатникам без ФЗ, ТП от 9 999", "rate": 0.01, "fixed": 0, "limit": 5000, "inPOS": false}, {"name": "КНК стабильный через FIS без ФЗ, ТП от 9 999", "rate": 0.015, "fixed": 0, "limit": 5000, "inPOS": false}, {"name": "КНК стабильный через ЛИД без ФЗ, ТП от 9 999", "rate": 0.01, "fixed": 0, "limit": 5000, "inPOS": false}, {"name": "КНК стабильный с ФЗ", "rate": 0, "fixed": 0, "limit": 5000, "inPOS": true}, {"name": "ДКПЗН", "rate": 0, "fixed": 2000, "limit": 0, "inPOS": false}, {"name": "Автокредит / ДКПЗА через ЛИД", "rate": 0, "fixed": 1250, "limit": 0, "inPOS": false}, {"name": "ДК МКК Быстрые покупки без ФЗ", "rate": 0, "fixed": 1000, "limit": 0, "inPOS": false}, {"name": "ДК МКК Быстрые покупки с ФЗ", "rate": 0, "fixed": 1500, "limit": 0, "inPOS": true}];
+const STORAGE_KEY = "premiumCalculatorExcelLikeV3";
+
+const defaultState = {
+  pos: [
+    {date:"2026-06-01", amount:135099, term:24, rate:"29,9%", fz:true, vis:true, ctk:true, complex:true},
+    {date:"2026-06-05", amount:62799, term:24, rate:"29,9%", fz:true, vis:true, ctk:true, complex:false},
+    {date:"2026-06-05", amount:175406, term:24, rate:"26%", fz:true, vis:true, ctk:true, complex:true},
+    {date:"2026-06-09", amount:82697, term:24, rate:"29,9%", fz:true, vis:true, ctk:true, complex:false}
+  ],
+  products: PRODUCT_DEFAULTS,
+  dk: [],
+  kpi: {
+    planPOS:550000, planPOSPieces:7, planFZ:0.8, planCTK:385000, planStart:7,
+    planKRH:9, planSubs:7, planDKPieces:2, planProtection:0.9, planDeposits:2,
+    planDebit:3, planDKAmount:400000, takeRateFact:0, csiFact:0, fraudFact:0,
+    targetPercent:120, includeExpert:true
+  }
+};
+
+let state = loadData();
+
+function loadData(){
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw) {
+      const saved = JSON.parse(raw);
+      if(saved && saved.pos && saved.products && saved.kpi) return saved;
+    }
+  } catch(e) {}
+  return JSON.parse(JSON.stringify(defaultState));
+}
+function saveData(){ readInputs(); localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); alert("Сохранено"); }
+function resetData(){ state = JSON.parse(JSON.stringify(defaultState)); localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); renderAll(); }
+function num(v){ return Number(v)||0; }
+function money(n){ return Math.round(n||0).toLocaleString("ru-RU")+" ₽"; }
+function pct(n){ return isFinite(n) ? Math.round(n*100)+"%" : "0%"; }
+function val(id){ const e=document.getElementById(id); if(!e) return 0; return e.type==="checkbox" ? e.checked : num(e.value); }
+function set(id,v){ const e=document.getElementById(id); if(!e) return; if(e.type==="checkbox") e.checked=!!v; else e.value=v; }
+
+function posRateIndex(term, fz){
+  term = num(term);
+  let pair = 0;
+  if(term <= 6) pair = 0;
+  else if(term <= 11) pair = 1;
+  else if(term <= 17) pair = 2;
+  else if(term <= 23) pair = 3;
+  else if(term <= 30) pair = 4;
+  else pair = 5;
+  return pair*2 + (fz ? 0 : 1);
+}
+function calcPOSRow(r){
+  const amount = num(r.amount);
+  if(!amount || !r.rate || !r.term) return {premium:0, base:0, rate:0, formula:"Заполни сумму, срок и ставку"};
+  const item = POS_RATES[r.rate];
+  if(!item) return {premium:0, base:0, rate:0, formula:"Ставка не найдена"};
+  const rate = item.rates[posRateIndex(r.term, !!r.fz)] || 0;
+  const base = Math.min(amount * rate, 4500);
+  const vis = r.vis ? 250 : 0;
+  const complex = r.complex ? 300 : 0;
+  const premium = base + vis + complex;
+  const formula = `МИН(${money(amount)} × ${(rate*100).toFixed(2).replace(".",",")}%; 4 500 ₽)` + (r.vis ? " + ВИС 250 ₽" : "") + (r.complex ? " + комплекс 300 ₽" : "") + ` = ${money(premium)}`;
+  return {premium, base, rate, formula};
+}
+function calcDKRow(r){
+  const t = DK_TYPES.find(x=>x.name===r.type);
+  const amount = num(r.amount);
+  if(!t || !amount) return {premium:0, inPOSAmount:0, formula:"Выбери вид ДК и сумму"};
+  let premium = 0;
+  if(t.fixed > 0) premium = t.fixed;
+  else if(t.rate > 0) premium = Math.min(amount*t.rate, t.limit);
+  const inPOSAmount = t.inPOS ? amount : 0;
+  const formula = t.fixed > 0 ? `Фикс ${money(t.fixed)}` : (t.rate > 0 ? `МИН(${money(amount)} × ${(t.rate*100).toFixed(1).replace(".",",")}%; ${money(t.limit)}) = ${money(premium)}` : "Премия 0 ₽");
+  return {premium, inPOSAmount, formula};
+}
+function productPremium(p){ return num(p.qty)*num(p.rate); }
+
+function calc(){
+  const posAmount = state.pos.reduce((s,r)=>s+num(r.amount),0);
+  const posPieces = state.pos.filter(r=>num(r.amount)>0).length;
+  const posPremium = state.pos.reduce((s,r)=>s+calcPOSRow(r).premium,0);
+  const visCount = state.pos.filter(r=>num(r.amount)>0 && r.vis).length;
+  const complexCount = state.pos.filter(r=>num(r.amount)>0 && r.complex).length;
+  const ctkAmount = state.pos.filter(r=>r.ctk).reduce((s,r)=>s+num(r.amount),0);
+  const fzAmount = state.pos.filter(r=>r.fz).reduce((s,r)=>s+num(r.amount),0);
+  const productsPremium = state.products.reduce((s,p)=>s+productPremium(p),0);
+  const dkPremium = state.dk.reduce((s,r)=>s+calcDKRow(r).premium,0);
+  const dkAmount = state.dk.reduce((s,r)=>s+num(r.amount),0);
+  const dkPieces = state.dk.filter(r=>num(r.amount)>0).length;
+  const dkInPOS = state.dk.reduce((s,r)=>s+calcDKRow(r).inPOSAmount,0);
+  const posKPIAmount = posAmount + dkInPOS;
+  const fzPenetration = posKPIAmount>0 ? (fzAmount + dkInPOS)/posKPIAmount : 0;
+
+  const krh = (state.products[0]?.qty||0) + (state.products[1]?.qty||0);
+  const startKRH = state.products[2]?.qty||0;
+  const subs = [3,4,5,6].reduce((s,i)=>s+num(state.products[i]?.qty),0);
+  const debit = [7,8,9,10,11].reduce((s,i)=>s+num(state.products[i]?.qty),0);
+  const deposits = num(state.products[12]?.qty);
+  const protection = state.products.slice(16).reduce((s,p)=>s+num(p.qty),0);
+  const protectionPercent = dkPieces>0 ? protection/dkPieces : 0;
+
+  const base = posPremium + productsPremium + dkPremium;
+  const k=state.kpi;
+
+  const sPOS = strataDefault(posKPIAmount, k.planPOS);
+  const sFZ = strataFZ(fzPenetration, k.planFZ);
+  const sCTK = strataDefault(ctkAmount, k.planCTK);
+  const sStart = strataDefault(startKRH, k.planStart);
+  const mainSum = sPOS+sFZ+sCTK+sStart;
+  const mainStrata = aggregateStrata(mainSum);
+
+  let chp = 0;
+  if(k.planKRH>0) chp += krh>=k.planKRH ? -1 : 2;
+  if(k.takeRateFact===0) chp += -0.5; else if(k.takeRateFact>1) chp += 1;
+  if(k.planSubs>0) chp += subs>=k.planSubs ? -1 : 1;
+  if(k.planPOSPieces>0) chp += posPieces>=k.planPOSPieces ? -1 : 1;
+  chp += dkPieces>=2 ? -4 : (dkPieces===1 ? -1 : 2);
+  if(k.planDKPieces>0) chp += protectionPercent>=k.planProtection ? -1 : (protectionPercent<0.8 ? 2 : 0);
+  chp += deposits>=2 ? -1 : (deposits===1 ? -0.5 : 0);
+  if(k.csiFact) chp += k.csiFact>=4.67 ? -0.5 : (k.csiFact<4 ? 0.5 : 0);
+  chp += num(k.fraudFact)*0.5;
+  chp += debit>=3 ? -1 : (debit===0 ? 1 : 0);
+  // ДК сумма — контроль, как в Excel, на страту не влияет.
+
+  const finalStrata = aggregateStrata(mainSum+chp);
+  const coef = coefficient(finalStrata);
+  const expert = k.includeExpert && finalStrata<=3 ? 20000 : 0;
+  const total = base*coef + expert;
+
+  return {posAmount,posPieces,posPremium,visCount,complexCount,ctkAmount,fzAmount,productsPremium,dkPremium,dkAmount,dkPieces,dkInPOS,posKPIAmount,fzPenetration,krh,startKRH,subs,debit,deposits,protection,protectionPercent,base,sPOS,sFZ,sCTK,sStart,mainSum,mainStrata,chp,finalStrata,coef,expert,total};
+}
+function strataDefault(fact,plan){ if(plan<=0)return 20; const p=fact/plan; if(p>=1.2)return 1;if(p>=1.1)return 2;if(p>=1)return 3;if(p>=.9)return 4;if(p>=.8)return 5;if(p>=.7)return 6;if(p>=.6)return 7;if(p>=.5)return 8;if(p>=.4)return 9;if(p>=.3)return 10;return 20; }
+function strataFZ(fact,plan){ if(plan<=0)return 20; const p=fact/plan; if(p>=1.2)return 2;if(p>=1.1)return 3;if(p>=1)return 4;if(p>=.9)return 5;if(p>=.8)return 6;if(p>=.7)return 7;if(p>=.6)return 8;if(p>=.5)return 9;if(p>=.4)return 10;return 20; }
+function aggregateStrata(sum){ if(sum<=4)return 1;if(sum<8)return 2;if(sum<14)return 3;if(sum<18)return 4;if(sum<22)return 5;if(sum<26)return 6;if(sum<30)return 7;if(sum<34)return 8;if(sum<38)return 9;if(sum<42)return 10;return 20; }
+function coefficient(s){ if(s===1)return 1.15;if(s===2)return 1.05;if(s===3||s===4)return 1;if(s===5)return .8;if(s===6)return .7;if(s===7)return .6;if(s===8||s===9)return .3;if(s===10)return .2;return .1; }
+
+function renderPOS(){
+  const list=document.getElementById("posList");
+  list.innerHTML="";
+  state.pos.forEach((r,i)=>{
+    const c=calcPOSRow(r);
+    const card=document.createElement("div");
+    card.className="card";
+    card.innerHTML=`
+      <div class="card-head"><div><b>POS ${i+1}</b><br><span>Премия: <b>${money(c.premium)}</b></span></div><button class="remove" onclick="removePOS(${i})">Удалить</button></div>
+      <div class="form-grid">
+        <div><label>Дата</label><input data-pos="${i}" data-field="date" type="date" value="${r.date||""}"></div>
+        <div><label>Сумма, ₽</label><input data-pos="${i}" data-field="amount" type="number" inputmode="decimal" value="${r.amount||""}"></div>
+        <div><label>Срок, мес.</label><input data-pos="${i}" data-field="term" type="number" inputmode="numeric" value="${r.term||""}"></div>
+        <div><label>Ставка</label><select data-pos="${i}" data-field="rate">${Object.keys(POS_RATES).map(x=>`<option value="${x}" ${x===r.rate?"selected":""}>${x}</option>`).join("")}</select></div>
+      </div>
+      <div class="switches">
+        <label class="switch">ФЗ <input data-pos="${i}" data-field="fz" type="checkbox" ${r.fz?"checked":""}></label>
+        <label class="switch">ВИС <input data-pos="${i}" data-field="vis" type="checkbox" ${r.vis?"checked":""}></label>
+        <label class="switch">ЦТК <input data-pos="${i}" data-field="ctk" type="checkbox" ${r.ctk?"checked":""}></label>
+        <label class="switch">POS+КРХ <input data-pos="${i}" data-field="complex" type="checkbox" ${r.complex?"checked":""}></label>
+      </div>
+      <div class="calc-line">${c.formula}</div>`;
+    list.appendChild(card);
+  });
+  list.querySelectorAll("input,select").forEach(el=>el.addEventListener("input", onPOSInput));
+  list.querySelectorAll("input[type=checkbox]").forEach(el=>el.addEventListener("change", onPOSInput));
+}
+function onPOSInput(e){
+  const i=Number(e.target.dataset.pos), field=e.target.dataset.field;
+  if(e.target.type==="checkbox") state.pos[i][field]=e.target.checked;
+  else if(field==="amount" || field==="term") state.pos[i][field]=num(e.target.value);
+  else state.pos[i][field]=e.target.value;
+  saveSilent(); renderAll();
+}
+function addPOS(){ readKPI(); state.pos.push({date:new Date().toISOString().slice(0,10), amount:0, term:24, rate:"29,9%", fz:true, vis:true, ctk:true, complex:false}); saveSilent(); renderAll(); }
+function removePOS(i){ state.pos.splice(i,1); saveSilent(); renderAll(); }
+
+function renderProducts(){
+  const list=document.getElementById("productList");
+  list.innerHTML="";
+  let current="";
+  state.products.forEach((p,i)=>{
+    if(p.section!==current){
+      current=p.section;
+      const h=document.createElement("div");
+      h.className="group-title";
+      h.textContent=current;
+      list.appendChild(h);
+    }
+    const row=document.createElement("div");
+    row.className="prod-row";
+    row.innerHTML=`<div><div class="prod-title">${p.name}</div><div class="prod-sub">${p.hint}</div></div><input data-prod="${i}" type="number" inputmode="numeric" value="${p.qty||""}" placeholder="0"><div class="prod-premium">${money(productPremium(p))}</div>`;
+    list.appendChild(row);
+  });
+  list.querySelectorAll("input").forEach(el=>el.addEventListener("input", e=>{ state.products[Number(e.target.dataset.prod)].qty=num(e.target.value); saveSilent(); renderAll(); }));
+}
+
+function renderDK(){
+  const list=document.getElementById("dkList"); list.innerHTML="";
+  state.dk.forEach((r,i)=>{
+    const c=calcDKRow(r);
+    const card=document.createElement("div");
+    card.className="card";
+    card.innerHTML=`
+      <div class="card-head"><div><b>ДК ${i+1}</b><br><span>Премия: <b>${money(c.premium)}</b></span></div><button class="remove" onclick="removeDK(${i})">Удалить</button></div>
+      <div class="form-grid">
+        <div><label>Дата</label><input data-dk="${i}" data-field="date" type="date" value="${r.date||""}"></div>
+        <div><label>Сумма, ₽</label><input data-dk="${i}" data-field="amount" type="number" value="${r.amount||""}"></div>
+        <div class="full"><label>Вид ДК</label><select data-dk="${i}" data-field="type">${DK_TYPES.map(x=>`<option value="${x.name}" ${x.name===r.type?"selected":""}>${x.name}</option>`).join("")}</select></div>
+      </div>
+      <div class="calc-line">${c.formula}${c.inPOSAmount>0?" | сумма входит в POS-план":""}</div>`;
+    list.appendChild(card);
+  });
+  list.querySelectorAll("input,select").forEach(el=>el.addEventListener("input", onDKInput));
+}
+function onDKInput(e){
+  const i=Number(e.target.dataset.dk), field=e.target.dataset.field;
+  if(field==="amount") state.dk[i][field]=num(e.target.value); else state.dk[i][field]=e.target.value;
+  saveSilent(); renderAll();
+}
+function addDK(){ readKPI(); state.dk.push({date:new Date().toISOString().slice(0,10), type:DK_TYPES[0].name, amount:0}); saveSilent(); renderAll(); }
+function removeDK(i){ state.dk.splice(i,1); saveSilent(); renderAll(); }
+
+function readKPI(){
+  ["planPOS","planPOSPieces","planFZ","planCTK","planStart","planKRH","planSubs","planDKPieces","planProtection","planDeposits","planDebit","planDKAmount","takeRateFact","csiFact","fraudFact","targetPercent"].forEach(id=>state.kpi[id]=val(id));
+  state.kpi.includeExpert=val("includeExpert");
+}
+function renderKPI(){
+  Object.entries(state.kpi).forEach(([k,v])=>set(k,v));
+  document.querySelectorAll("#view-kpi input").forEach(el=>{ if(!el.dataset.bound){ el.dataset.bound="1"; el.addEventListener("input",()=>{readKPI(); saveSilent(); renderSummary();}); el.addEventListener("change",()=>{readKPI(); saveSilent(); renderSummary();}); } });
+}
+function progress(title,fact,plan,suffix){ const ratio=plan>0?fact/plan:0; const cls=ratio>=1?"good":ratio>=.8?"warn":"bad"; const ft=suffix==="₽"?money(fact):Math.round(fact).toLocaleString("ru-RU"); const pt=suffix==="₽"?money(plan):Math.round(plan).toLocaleString("ru-RU"); return `<div class="progress-item"><div class="progress-top"><span>${title}</span><b>${pct(ratio)}</b></div><div class="bar"><div class="fill ${cls}" style="width:${Math.min(ratio,1)*100}%"></div></div><div class="progress-bottom"><span>${ft}</span><span>цель ${pt}</span></div></div>`; }
+function recommendations(r){
+  const k=state.kpi, items=[];
+  if(k.planPOS-r.posKPIAmount>0) items.push(`POS сумма: осталось ${money(k.planPOS-r.posKPIAmount)}.`);
+  if(k.planPOSPieces-r.posPieces>0) items.push(`POS ДНС, шт.: не хватает ${k.planPOSPieces-r.posPieces}.`);
+  if(k.planKRH-r.krh>0) items.push(`КРХ лимит: не хватает ${k.planKRH-r.krh}.`);
+  if(k.planStart-r.startKRH>0) items.push(`Старт КРХ: не хватает ${k.planStart-r.startKRH}.`);
+  if(k.planSubs-r.subs>0) items.push(`Подписки: не хватает ${k.planSubs-r.subs}.`);
+  if(r.dkPieces===0) items.push("ДК: по факту 0, в ЧП это ухудшает страту.");
+  if(r.dkPieces>0 && r.protectionPercent<0.8) items.push("Пакет с защитой в ДК ниже 80% — риск штрафа.");
+  if(k.planDebit-r.debit>0) items.push(`Дебетовые карты: не хватает ${k.planDebit-r.debit}.`);
+  if(k.takeRateFact===0) items.push("Take rate сейчас 0 — проверь факт.");
+  if(!items.length) items.push("Основные показатели закрыты.");
+  return items;
+}
+function renderSummary(){
+  const r=calc();
+  document.getElementById("totalPremium").textContent=money(r.total);
+  document.getElementById("formulaText").textContent=`${money(r.base)} × ${r.coef.toFixed(2)} + ${money(r.expert)}`;
+  document.getElementById("finalStrata").textContent=r.finalStrata;
+  document.getElementById("coef").textContent=r.coef.toFixed(2);
+  document.getElementById("expertPremium").textContent=money(r.expert);
+  document.getElementById("sumPOSPremium").textContent=money(r.posPremium);
+  document.getElementById("sumProductsPremium").textContent=money(r.productsPremium);
+  document.getElementById("sumDKPremium").textContent=money(r.dkPremium);
+  document.getElementById("basePremium").textContent=money(r.base);
+  document.getElementById("mainStatus").textContent=r.finalStrata<=3?"сильная зона":r.finalStrata<=5?"нужно добить":"риск премии";
+  document.getElementById("mainStatus").className="tag "+(r.finalStrata<=3?"ok":r.finalStrata<=5?"warn":"bad");
+  document.getElementById("progressList").innerHTML =
+    progress("POS сумма",r.posKPIAmount,state.kpi.planPOS,"₽")+
+    progress("POS шт.",r.posPieces,state.kpi.planPOSPieces,"шт")+
+    progress("ФЗ проникновение",r.fzPenetration,state.kpi.planFZ,"%")+
+    progress("ЦТК сумма",r.ctkAmount,state.kpi.planCTK,"₽")+
+    progress("КРХ",r.krh,state.kpi.planKRH,"шт")+
+    progress("Подписки",r.subs,state.kpi.planSubs,"шт")+
+    progress("ДК шт.",r.dkPieces,state.kpi.planDKPieces,"шт")+
+    progress("Защита в ДК",r.protectionPercent,state.kpi.planProtection,"%")+
+    progress("Дебет",r.debit,state.kpi.planDebit,"шт");
+  document.getElementById("recoList").innerHTML=recommendations(r).map((x,i)=>`<div class="reco"><div class="dot">${i+1}</div><div>${x}</div></div>`).join("");
+}
+function renderAll(){ renderPOS(); renderProducts(); renderDK(); renderKPI(); renderSummary(); }
+function saveSilent(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function copySummary(){ const r=calc(); const text=`Премия: ${money(r.total)}\nСтрата: ${r.finalStrata}\nКоэффициент: ${r.coef.toFixed(2)}\nPOS: ${money(r.posPremium)}\nПродукты: ${money(r.productsPremium)}\nДК: ${money(r.dkPremium)}`; navigator.clipboard?.writeText(text).then(()=>alert("Итог скопирован")).catch(()=>alert(text)); }
+document.querySelectorAll(".tab").forEach(btn=>btn.addEventListener("click",()=>{ readKPI(); document.querySelectorAll(".tab").forEach(b=>b.classList.remove("active")); btn.classList.add("active"); document.querySelectorAll(".view").forEach(v=>v.classList.remove("active")); document.getElementById("view-"+btn.dataset.view).classList.add("active"); saveSilent(); renderSummary(); scrollTo({top:0,behavior:"smooth"}); }));
+window.addEventListener("beforeunload",()=>{ try{ readKPI(); saveSilent(); }catch(e){} });
+renderAll();
+</script>
+</body>
+</html>
