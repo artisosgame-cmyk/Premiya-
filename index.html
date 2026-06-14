@@ -34,7 +34,7 @@ label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}input,se
 </head>
 <body>
 <div class="app">
-<header><div><h1>Калькулятор премии</h1><div class="sub">главная — инфографика, ввод — во вкладках</div></div><div class="pill">v5.1</div></header>
+<header><div><h1>Калькулятор премии</h1><div class="sub">главная — инфографика, ввод — во вкладках</div></div><div class="pill">v5.2</div></header>
 <main>
 <div id="view-main" class="view active">
   <div class="hero">
@@ -42,20 +42,23 @@ label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}input,se
     <div class="money" id="totalPremium">0 ₽</div>
     <div class="note" id="formulaText">все расчёты связаны с POS, продуктами, ДК и планами</div>
   </div>
+
   <div class="grid3">
     <div class="metric"><div class="k">Страта</div><div class="v" id="finalStrata">—</div></div>
     <div class="metric"><div class="k">Коэф.</div><div class="v" id="coef">—</div></div>
     <div class="metric"><div class="k">Цель</div><div class="v" id="targetBadge">—</div></div>
   </div>
+
   <section>
-    <div class="section-title"><h2>Расчёт страт</h2><span class="small">KPI + ЧП</span></div>
-    <div class="row"><div class="name">POS сумма</div><div class="value" id="strataPOS">—</div></div>
-    <div class="row"><div class="name">ФЗ проникновение</div><div class="value" id="strataFZ">—</div></div>
-    <div class="row"><div class="name">ЦТК сумма</div><div class="value" id="strataCTK">—</div></div>
-    <div class="row"><div class="name">Старт КРХ</div><div class="value" id="strataStart">—</div></div>
-    <div class="row"><div class="name">Основная KPI страта</div><div class="value" id="mainStrata">—</div></div>
-    <div class="row"><div class="name">Корректировка ЧП</div><div class="value" id="chpAdjust">—</div></div>
-    <div class="row"><div class="name">Итоговая страта</div><div class="value" id="finalStrataExplain">—</div></div>
+    <div class="section-title"><h2>Основная карта KPI</h2><span class="small">главные показатели</span></div>
+    <div id="mainKpiList"></div>
+    <div class="calc-line" id="mainKpiSummary">Расчёт основной страты.</div>
+  </section>
+
+  <section>
+    <div class="section-title"><h2>Чемпионат профессионалов</h2><span class="small">влияние на страту</span></div>
+    <div id="chpList"></div>
+    <div class="calc-line" id="chpSummary">Корректировка ЧП.</div>
   </section>
 
   <section>
@@ -64,14 +67,12 @@ label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}input,se
     <div class="row"><div class="name">Разница к текущей</div><div class="value" id="targetDelta">0 ₽</div></div>
     <div class="calc-line" id="targetComment">Цель меняется во вкладке “Планы”.</div>
   </section>
+
   <section>
-    <div class="section-title"><h2>Что не хватает до цели</h2><span class="small">по плану из вкладки “Планы”</span></div>
+    <div class="section-title"><h2>Фокус на сегодня</h2><span class="small">что добить в первую очередь</span></div>
     <div id="needList"></div>
   </section>
-  <section>
-    <div class="section-title"><h2>Выполнение</h2><span class="small">инфографика</span></div>
-    <div id="progressList"></div>
-  </section>
+
   <section>
     <div class="section-title"><h2>Состав премии</h2><span class="small">без повторов</span></div>
     <div class="row"><div class="name">POS</div><div class="value" id="sumPOSPremium">0 ₽</div></div>
@@ -95,15 +96,28 @@ label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}input,se
 
 <div id="view-kpi" class="view">
 <section>
-<div class="section-title"><h2>Планы и прогноз</h2><span class="small">всё меняется здесь</span></div>
+<div class="section-title"><h2>Прогноз</h2><span class="small">общие настройки</span></div>
 <div class="form-grid">
   <div><label>Цель прогноза, %</label><input id="targetPercent" type="number"></div>
+  <div class="switch"><span>Учитывать Эксперт 20 000 ₽</span><input id="includeExpert" type="checkbox"></div>
+</div>
+</section>
+
+<section>
+<div class="section-title"><h2>Планы основной карты KPI</h2><span class="small">главные показатели</span></div>
+<div class="form-grid">
   <div><label>POS сумма, ₽</label><input id="planPOS" type="number"></div>
-  <div><label>POS шт.</label><input id="planPOSPieces" type="number"></div>
   <div><label>ФЗ норма</label><input id="planFZ" type="number" step="0.01"></div>
   <div><label>ЦТК сумма, ₽</label><input id="planCTK" type="number"></div>
   <div><label>Старт КРХ</label><input id="planStart" type="number"></div>
+</div>
+</section>
+
+<section>
+<div class="section-title"><h2>Планы чемпионата профессионалов</h2><span class="small">корректировка страты</span></div>
+<div class="form-grid">
   <div><label>КРХ план</label><input id="planKRH" type="number"></div>
+  <div><label>POS шт.</label><input id="planPOSPieces" type="number"></div>
   <div><label>Подписки</label><input id="planSubs" type="number"></div>
   <div><label>ДК шт.</label><input id="planDKPieces" type="number"></div>
   <div><label>Защита, %</label><input id="planProtection" type="number" step="0.01"></div>
@@ -112,16 +126,16 @@ label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}input,se
   <div><label>Take rate факт</label><input id="takeRateFact" type="number" step="0.01"></div>
   <div><label>CSI факт</label><input id="csiFact" type="number" step="0.01"></div>
   <div><label>ФРОД / мисселинг</label><input id="fraudFact" type="number"></div>
-  <div class="full switch"><span>Учитывать Эксперт 20 000 ₽</span><input id="includeExpert" type="checkbox"></div>
 </div>
 </section>
+
 <section>
 <div class="section-title"><h2>Подробно: почему такая страта</h2><span class="small">расшифровка</span></div>
 <div id="strataDetails"></div>
 </section>
-<section><div class="section-title"><h2>Действия</h2></div><div class="btns"><button onclick="saveData()">Сохранить</button><button class="secondary" onclick="resetData()">Вернуть пример</button><button class="ghost" onclick="copySummary()">Скопировать итог</button></div><p class="footer">Главная ничего не редактирует. Все планы и прогноз меняются только здесь.</p></section>
+<section><div class="section-title"><h2>Действия</h2></div><div class="btns"><button onclick="saveData()">Сохранить</button><button class="secondary" onclick="resetData()">Вернуть пример</button><button class="ghost" onclick="copySummary()">Скопировать итог</button></div><p class="footer">Главная — только инфографика. Все планы и прогноз меняются здесь.</p></section>
 </div>
-</main>
+</main></main>
 </div>
 
 <div class="tabs"><div class="tabbar"><button class="tab active" data-view="main">Главная</button><button class="tab" data-view="pos">POS</button><button class="tab" data-view="products">Продукты</button><button class="tab" data-view="dk">ДК</button><button class="tab" data-view="kpi">Планы</button></div></div>
@@ -215,12 +229,31 @@ function calc(){
 
 function targetCalc(r){
  const k=state.kpi,m=num(k.targetPercent)/100||1;
- const t={posAmount:k.planPOS*m,posPieces:Math.ceil(k.planPOSPieces*m),krh:Math.ceil(k.planKRH*m),startKRH:Math.ceil(k.planStart*m),subs:Math.ceil(k.planSubs*m),debit:Math.ceil(k.planDebit*m),dkPieces:Math.ceil(k.planDKPieces*m),protection:k.planProtection};
- const need={posAmount:Math.max(t.posAmount-r.posKPIAmount,0),posPieces:Math.max(t.posPieces-r.posPieces,0),krh:Math.max(t.krh-r.krh,0),startKRH:Math.max(t.startKRH-r.startKRH,0),subs:Math.max(t.subs-r.subs,0),debit:Math.max(t.debit-r.debit,0),dkPieces:Math.max(t.dkPieces-r.dkPieces,0)};
+ const t={
+   posAmount:k.planPOS*m,
+   posPieces:Math.ceil(k.planPOSPieces*m),
+   krh:Math.ceil(k.planKRH*m),
+   startKRH:Math.ceil(k.planStart*m),
+   subs:Math.ceil(k.planSubs*m),
+   debit:Math.ceil(k.planDebit*m),
+   dkPieces:Math.ceil(k.planDKPieces*m),
+   ctkAmount:k.planCTK*m,
+   protection:k.planProtection
+ };
+ const need={
+   posAmount:Math.max(t.posAmount-r.posKPIAmount,0),
+   posPieces:Math.max(t.posPieces-r.posPieces,0),
+   krh:Math.max(t.krh-r.krh,0),
+   startKRH:Math.max(t.startKRH-r.startKRH,0),
+   subs:Math.max(t.subs-r.subs,0),
+   debit:Math.max(t.debit-r.debit,0),
+   dkPieces:Math.max(t.dkPieces-r.dkPieces,0),
+   ctkAmount:Math.max(t.ctkAmount-r.ctkAmount,0)
+ };
  const addPremium=need.posAmount*0.035+need.krh*100+need.startKRH*500+need.subs*350+need.debit*100+need.dkPieces*1500;
  const sPOS=strataDefault(t.posAmount,k.planPOS);
  const sFZ=strataFZ(r.fzPenetration,k.planFZ);
- const sCTK=strataDefault(r.ctkAmount,k.planCTK);
+ const sCTK=strataDefault(t.ctkAmount,k.planCTK);
  const sStart=strataDefault(t.startKRH,k.planStart);
  let chp=0;
  chp+=t.krh>=k.planKRH?-1:2;
@@ -230,11 +263,14 @@ function targetCalc(r){
  chp+=t.dkPieces>=2?-4:(t.dkPieces===1?-1:2);
  chp+=t.protection>=k.planProtection?-1:(t.protection<80?2:0);
  chp+=t.debit>=k.planDebit?-1:(t.debit===0?1:0);
- const finalStrata=aggregateStrata(sPOS+sFZ+sCTK+sStart+chp);
+ chp+=num(k.fraudFact)*0.5;
+ if(num(k.csiFact))chp+=num(k.csiFact)>=4.67?-0.5:(num(k.csiFact)<4?0.5:0);
+ const mainSum=sPOS+sFZ+sCTK+sStart;
+ const finalStrata=aggregateStrata(mainSum+chp);
  const coef=coefficient(finalStrata);
  const expert=k.includeExpert&&finalStrata<=3?20000:0;
  const total=(r.base+addPremium)*coef+expert;
- return{target:t,need,addPremium,finalStrata,coef,total,delta:total-r.total}
+ return{target:t,need,addPremium,sPOS,sFZ,sCTK,sStart,mainSum,finalStrata,coef,total,delta:total-r.total,chp};
 }
 
 function infoBar(title,fact,plan,suffix){
@@ -245,23 +281,39 @@ function infoBar(title,fact,plan,suffix){
 }
 
 
-function strataLabel(s){
-  return "страта " + s;
-}
-function chpText(r){
-  const items=[];
+function strataLabel(s){ return "страта " + s; }
+function signedValue(v){ return v>0 ? `+${v}` : `${v}`; }
+function correctionClass(v){ return v<0 ? 'ok' : (v>0 ? 'bad' : ''); }
+function chpItems(r){
   const k=state.kpi;
-  items.push("КРХ: " + (r.krh>=k.planKRH ? "-1" : "+2"));
-  items.push("Take rate: " + (k.takeRateFact===0 ? "-0.5" : (k.takeRateFact>1 ? "+1" : "0")));
-  items.push("Подписки: " + (r.subs>=k.planSubs ? "-1" : "+1"));
-  items.push("POS шт.: " + (r.posPieces>=k.planPOSPieces ? "-1" : "+1"));
-  items.push("ДК шт.: " + (r.dkPieces>=2 ? "-4" : (r.dkPieces===1 ? "-1" : "+2")));
-  items.push("Защита: " + (r.protectionPercent>=k.planProtection ? "-1" : (r.protectionPercent<80 ? "+2" : "0")));
-  items.push("Дебет: " + (r.debit>=k.planDebit ? "-1" : (r.debit===0 ? "+1" : "0")));
-  return items.join(" · ");
+  const items=[];
+  items.push({name:'КРХ', fact:`${r.krh} / ${k.planKRH}`, delta:(r.krh>=k.planKRH?-1:2)});
+  items.push({name:'Take rate', fact:`${num(k.takeRateFact).toFixed(2)}`, delta:(k.takeRateFact===0?-0.5:(k.takeRateFact>1?1:0))});
+  items.push({name:'Подписки', fact:`${r.subs} / ${k.planSubs}`, delta:(r.subs>=k.planSubs?-1:1)});
+  items.push({name:'POS шт.', fact:`${r.posPieces} / ${k.planPOSPieces}`, delta:(r.posPieces>=k.planPOSPieces?-1:1)});
+  items.push({name:'ДК шт.', fact:`${r.dkPieces} / ${k.planDKPieces}`, delta:(r.dkPieces>=2?-4:(r.dkPieces===1?-1:2))});
+  items.push({name:'Защита', fact:`${Math.round(r.protectionPercent)}% / ${Math.round(k.planProtection)}%`, delta:(r.protectionPercent>=k.planProtection?-1:(r.protectionPercent<80?2:0))});
+  items.push({name:'Дебет', fact:`${r.debit} / ${k.planDebit}`, delta:(r.debit>=k.planDebit?-1:(r.debit===0?1:0))});
+  if(num(k.csiFact)) items.push({name:'CSI', fact:`${num(k.csiFact).toFixed(2)}`, delta:(num(k.csiFact)>=4.67?-0.5:(num(k.csiFact)<4?0.5:0))});
+  if(num(k.fraudFact)) items.push({name:'Фрод / мисселинг', fact:`${num(k.fraudFact)}`, delta:num(k.fraudFact)*0.5});
+  return items;
+}
+function renderMainKpiRows(r,t){
+  const k=state.kpi;
+  const rows=[
+    {name:'POS сумма', fact:money(r.posKPIAmount), target:money(t.target.posAmount), strata:r.sPOS, helper:`план ${money(k.planPOS)}`},
+    {name:'ФЗ проникновение', fact:pct(r.fzPenetration), target:pct(k.planFZ), strata:r.sFZ, helper:'норма не умножается на цель'},
+    {name:'ЦТК сумма', fact:money(r.ctkAmount), target:money(t.target.ctkAmount), strata:r.sCTK, helper:`план ${money(k.planCTK)}`},
+    {name:'Старт КРХ', fact:String(r.startKRH), target:String(t.target.startKRH), strata:r.sStart, helper:`план ${k.planStart}`},
+  ];
+  return rows.map(x=>`<div class="row"><div class="name">${x.name}<br><span class="small">${x.fact} / цель ${x.target}</span></div><div class="value">страта ${x.strata}<br><span class="small">${x.helper}</span></div></div>`).join('');
+}
+function renderChpRows(r){
+  return chpItems(r).map(x=>`<div class="row"><div class="name">${x.name}<br><span class="small">${x.fact}</span></div><div class="value ${correctionClass(x.delta)}">${signedValue(x.delta)}</div></div>`).join('');
 }
 function renderStrataDetails(r){
   const k=state.kpi;
+  const chpHtml=chpItems(r).map(x=>`${x.name}: ${signedValue(x.delta)}`).join(' · ');
   return `
     <div class="row"><div class="name">POS сумма<br><span class="small">${money(r.posKPIAmount)} / ${money(k.planPOS)}</span></div><div class="value">страта ${r.sPOS}</div></div>
     <div class="row"><div class="name">ФЗ проникновение<br><span class="small">${pct(r.fzPenetration)} / ${pct(k.planFZ)}</span></div><div class="value">страта ${r.sFZ}</div></div>
@@ -269,7 +321,7 @@ function renderStrataDetails(r){
     <div class="row"><div class="name">Старт КРХ<br><span class="small">${r.startKRH} / ${k.planStart}</span></div><div class="value">страта ${r.sStart}</div></div>
     <div class="row"><div class="name">Сумма страт KPI</div><div class="value">${r.mainSum}</div></div>
     <div class="row"><div class="name">Основная KPI страта</div><div class="value">${r.mainStrata}</div></div>
-    <div class="row"><div class="name">Корректировка ЧП<br><span class="small">${chpText(r)}</span></div><div class="value">${r.chp.toFixed(1)}</div></div>
+    <div class="row"><div class="name">Корректировка ЧП<br><span class="small">${chpHtml}</span></div><div class="value">${r.chp.toFixed(1)}</div></div>
     <div class="row"><div class="name">Итоговая страта после ЧП</div><div class="value">${r.finalStrata}</div></div>
     <div class="row"><div class="name">Коэффициент премии</div><div class="value">${r.coef.toFixed(2)}</div></div>
   `;
@@ -277,23 +329,37 @@ function renderStrataDetails(r){
 
 function renderMain(){
  const r=calc(), t=targetCalc(r), k=state.kpi;
- setText("totalPremium",money(r.total));setText("formulaText",`${money(r.base)} × ${r.coef.toFixed(2)} + ${money(r.expert)}`);
- setText("finalStrata",r.finalStrata);setText("coef",r.coef.toFixed(2));setText("targetBadge",k.targetPercent+"%");
- setText("strataPOS", strataLabel(r.sPOS));
- setText("strataFZ", strataLabel(r.sFZ));
- setText("strataCTK", strataLabel(r.sCTK));
- setText("strataStart", strataLabel(r.sStart));
- setText("mainStrata", r.mainStrata);
- setText("chpAdjust", r.chp.toFixed(1));
- setText("finalStrataExplain", r.finalStrata + " → коэф. " + r.coef.toFixed(2));
+ setText("totalPremium",money(r.total));
+ setText("formulaText",`${money(r.base)} × ${r.coef.toFixed(2)} + ${money(r.expert)}`);
+ setText("finalStrata",r.finalStrata);
+ setText("coef",r.coef.toFixed(2));
+ setText("targetBadge",k.targetPercent+"%");
+ setHTML("mainKpiList", renderMainKpiRows(r,t));
+ setText("mainKpiSummary", `Сумма страт KPI: ${r.mainSum} → основная страта ${r.mainStrata}`);
+ setHTML("chpList", renderChpRows(r));
+ setText("chpSummary", `Корректировка ЧП: ${signedValue(Number(r.chp.toFixed(1)))} → итоговая страта ${r.finalStrata}`);
  setHTML("strataDetails", renderStrataDetails(r));
- setText("targetPremium",money(t.total));setText("targetDelta",(t.delta>=0?"+":"")+money(t.delta));setClass("targetDelta","value "+(t.delta>=0?"ok":"bad"));
- setText("mainStatus",r.finalStrata<=3?"сильная зона":r.finalStrata<=5?"нужно добить":"риск премии");setClass("mainStatus","tag "+(r.finalStrata<=3?"ok":r.finalStrata<=5?"warn":"bad"));
- const parts=[]; if(t.need.posAmount>0)parts.push(`POS сумма: +${money(t.need.posAmount)}`); if(t.need.posPieces>0)parts.push(`POS шт.: +${t.need.posPieces}`); if(t.need.krh>0)parts.push(`КРХ: +${t.need.krh}`); if(t.need.startKRH>0)parts.push(`Старт КРХ: +${t.need.startKRH}`); if(t.need.subs>0)parts.push(`Подписки: +${t.need.subs}`); if(t.need.debit>0)parts.push(`Дебет: +${t.need.debit}`); if(t.need.dkPieces>0)parts.push(`ДК: +${t.need.dkPieces}`);
- setText("targetComment",parts.length?`До цели ${k.targetPercent}%: `+parts.join(" · "):`Цель ${k.targetPercent}% по основным блокам уже закрыта.`);
- setHTML("needList",parts.length?parts.map((x,i)=>`<div class="reco"><div class="dot">${i+1}</div><div>${x}</div></div>`).join(""):`<div class="hint">По текущим значениям цель закрыта. Можно поднять цель во вкладке “Планы”.</div>`);
- setHTML("progressList",infoBar("POS сумма",r.posKPIAmount,k.planPOS*(k.targetPercent/100),"₽")+infoBar("POS шт.",r.posPieces,Math.ceil(k.planPOSPieces*(k.targetPercent/100)),"шт")+infoBar("КРХ",r.krh,Math.ceil(k.planKRH*(k.targetPercent/100)),"шт")+infoBar("Подписки",r.subs,Math.ceil(k.planSubs*(k.targetPercent/100)),"шт")+infoBar("ДК",r.dkPieces,Math.ceil(k.planDKPieces*(k.targetPercent/100)),"шт"));
- setText("sumPOSPremium",money(r.posPremium));setText("sumProductsPremium",money(r.productsPremium));setText("sumDKPremium",money(r.dkPremium));setText("expertPremium",money(r.expert));
+ setText("targetPremium",money(t.total));
+ setText("targetDelta",(t.delta>=0?"+":"")+money(t.delta));
+ setClass("targetDelta","value "+(t.delta>=0?"ok":"bad"));
+ setText("mainStatus",r.finalStrata<=3?"сильная зона":r.finalStrata<=5?"нужно добить":"риск премии");
+ setClass("mainStatus","tag "+(r.finalStrata<=3?"ok":r.finalStrata<=5?"warn":"bad"));
+ const parts=[];
+ if(t.need.posAmount>0) parts.push(`POS сумма: +${money(t.need.posAmount)}`);
+ if(t.need.ctkAmount>0) parts.push(`ЦТК: +${money(t.need.ctkAmount)}`);
+ if(t.need.posPieces>0) parts.push(`POS шт.: +${t.need.posPieces}`);
+ if(t.need.krh>0) parts.push(`КРХ: +${t.need.krh}`);
+ if(t.need.startKRH>0) parts.push(`Старт КРХ: +${t.need.startKRH}`);
+ if(t.need.subs>0) parts.push(`Подписки: +${t.need.subs}`);
+ if(t.need.debit>0) parts.push(`Дебет: +${t.need.debit}`);
+ if(t.need.dkPieces>0) parts.push(`ДК: +${t.need.dkPieces}`);
+ if(r.fzPenetration<k.planFZ) parts.push(`ФЗ: до нормы ${pct(k.planFZ-r.fzPenetration)}`);
+ setText("targetComment", parts.length ? `При цели ${k.targetPercent}% нужно добрать: `+parts.join(" · ") : `Цель ${k.targetPercent}% по основным блокам уже закрыта.`);
+ setHTML("needList", parts.length ? parts.map((x,i)=>`<div class="reco"><div class="dot">${i+1}</div><div>${x}</div></div>`).join("") : `<div class="hint">По текущим значениям цель закрыта. Можно поднять цель прогноза во вкладке “Планы”.</div>`);
+ setText("sumPOSPremium",money(r.posPremium));
+ setText("sumProductsPremium",money(r.productsPremium));
+ setText("sumDKPremium",money(r.dkPremium));
+ setText("expertPremium",money(r.expert));
 }
 
 function renderPOS(){
@@ -312,7 +378,7 @@ function addDK(){state.dk.push({date:new Date().toISOString().slice(0,10),type:D
 function removeDK(i){state.dk.splice(i,1);saveSilent();renderAll()}
 
 function readKPI(){["targetPercent","planPOS","planPOSPieces","planFZ","planCTK","planStart","planKRH","planSubs","planDKPieces","planProtection","planDebit","planDKAmount","takeRateFact","csiFact","fraudFact"].forEach(id=>state.kpi[id]=val(id));state.kpi.includeExpert=val("includeExpert")}
-function renderKPI(){Object.entries(state.kpi).forEach(([k,v])=>set(k,v));document.querySelectorAll("#view-kpi input").forEach(e=>{if(!e.dataset.bound){e.dataset.bound="1";e.addEventListener("input",()=>{readKPI();saveSilent();renderAll()});e.addEventListener("change",()=>{readKPI();saveSilent();renderAll()})}})}
+function renderKPI(){Object.entries(state.kpi).forEach(([k,v])=>set(k,v));document.querySelectorAll("#view-kpi input, #view-kpi select").forEach(e=>{if(!e.dataset.bound){e.dataset.bound="1";e.addEventListener("input",()=>{readKPI();saveSilent();renderAll()});e.addEventListener("change",()=>{readKPI();saveSilent();renderAll()})}})}
 function renderAll(){renderPOS();renderProducts();renderDK();renderKPI();renderMain()}
 function copySummary(){const r=calc(),t=targetCalc(r);const txt=`Премия сейчас: ${money(r.total)}\nЦель: ${state.kpi.targetPercent}%\nПремия при цели: ${money(t.total)}\nРазница: ${money(t.delta)}`;navigator.clipboard?.writeText(txt).then(()=>alert("Итог скопирован")).catch(()=>alert(txt))}
 document.querySelectorAll(".tab").forEach(btn=>btn.addEventListener("click",()=>{readKPI();document.querySelectorAll(".tab").forEach(b=>b.classList.remove("active"));btn.classList.add("active");document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));document.getElementById("view-"+btn.dataset.view).classList.add("active");saveSilent();renderMain();scrollTo({top:0,behavior:"smooth"})}));
