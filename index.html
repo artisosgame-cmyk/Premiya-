@@ -37,24 +37,25 @@ label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}input,se
 </head>
 <body>
 <div class="app">
-<header><div><h1>Калькулятор премии</h1><div class="sub">принцип Excel: одна строка = один кредит / продукт</div></div><div class="pill">v3.2</div></header>
+<header><div><h1>Калькулятор премии</h1><div class="sub">принцип Excel: одна строка = один кредит / продукт</div></div><div class="pill">v3.3</div></header>
 
 <main>
 <div id="view-main" class="view active">
-  <div class="hero"><div class="label">Полная фактическая премия</div><div class="money" id="totalPremium">0 ₽</div><div class="note" id="formulaText">База × коэффициент + Эксперт</div></div>
-  <div class="grid3"><div class="metric"><div class="k">Страта</div><div class="v" id="finalStrata">—</div></div><div class="metric"><div class="k">Коэф.</div><div class="v" id="coef">—</div></div><div class="metric"><div class="k">Эксперт</div><div class="v" id="expertPremium">—</div></div></div>
-  <section><div class="section-title"><h2>Итоги по блокам</h2><span class="tag" id="mainStatus">—</span></div><div class="row"><div class="name">POS премия</div><div class="value" id="sumPOSPremium">0 ₽</div></div><div class="row"><div class="name">Продукты</div><div class="value" id="sumProductsPremium">0 ₽</div></div><div class="row"><div class="name">ДК</div><div class="value" id="sumDKPremium">0 ₽</div></div><div class="row"><div class="name">База до коэффициента</div><div class="value" id="basePremium">0 ₽</div></div></section>
+  <div class="hero">
+    <div class="label">Итоговая премия сейчас</div>
+    <div class="money" id="totalPremium">0 ₽</div>
+    <div class="note" id="formulaText">База × коэффициент + Эксперт</div>
+  </div>
+
+  <div class="grid3">
+    <div class="metric"><div class="k">Страта</div><div class="v" id="finalStrata">—</div></div>
+    <div class="metric"><div class="k">Коэф.</div><div class="v" id="coef">—</div></div>
+    <div class="metric"><div class="k">База</div><div class="v" id="basePremium">0 ₽</div></div>
+  </div>
+
   <section>
-    <div class="section-title"><h2>Прогноз премии</h2><span class="small">100% / 110% / 120%</span></div>
-    <div class="row"><div class="name">Премия сейчас</div><div class="value" id="forecastNow">0 ₽</div></div>
-    <div class="row"><div class="name">Если закрыть 100%</div><div class="value" id="forecast100">0 ₽</div></div>
-    <div class="row"><div class="name">Если закрыть 110%</div><div class="value" id="forecast110">0 ₽</div></div>
-    <div class="row"><div class="name">Если закрыть 120%</div><div class="value" id="forecast120">0 ₽</div></div>
-    <div class="calc-line" id="forecastComment">Расчёт появится после заполнения показателей.</div>
-  </section>
-  <section>
-    <div class="section-title"><h2>Мой сценарий</h2><span class="small">ручной расчёт</span></div>
-    <div class="hint" style="margin-bottom:12px">Выбери процент или введи свои значения. Все расчёты берутся из текущих POS, продуктов, ДК и планов.</div>
+    <div class="section-title"><h2>Мой сценарий</h2><span class="small">100% / вручную</span></div>
+    <div class="hint" style="margin-bottom:12px">Здесь можно проверить, сколько будет премия, если закрыть план на нужный процент или ввести свои значения.</div>
     <div class="form-grid">
       <div>
         <label>Режим</label>
@@ -83,13 +84,17 @@ label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}input,se
   </section>
 
   <section>
-    <div class="section-title"><h2>Планы месяца</h2><span class="small">главные цели</span></div>
-    <div class="row"><div class="name">POS сумма / шт.</div><div class="value" id="planMainPOS">—</div></div>
-    <div class="row"><div class="name">КРХ / Старт КРХ</div><div class="value" id="planMainKRH">—</div></div>
-    <div class="row"><div class="name">Подписки / Дебет</div><div class="value" id="planMainProducts">—</div></div>
-    <div class="row"><div class="name">ДК / Защита</div><div class="value" id="planMainDK">—</div></div>
+    <div class="section-title"><h2>Что добить</h2><span class="tag" id="mainStatus">—</span></div>
+    <div id="recoList"></div>
   </section>
-  <section><div class="section-title"><h2>Выполнение</h2><span class="small">факт / план</span></div><div id="progressList"></div></section>
+
+  <section>
+    <div class="section-title"><h2>Краткая разбивка</h2><span class="small">без повторов</span></div>
+    <div class="row"><div class="name">POS</div><div class="value" id="sumPOSPremium">0 ₽</div></div>
+    <div class="row"><div class="name">Продукты</div><div class="value" id="sumProductsPremium">0 ₽</div></div>
+    <div class="row"><div class="name">ДК</div><div class="value" id="sumDKPremium">0 ₽</div></div>
+    <div class="row"><div class="name">Эксперт</div><div class="value" id="expertPremium">0 ₽</div></div>
+  </section>
 </div>
 
 <div id="view-pos" class="view">
@@ -200,6 +205,8 @@ function loadData(){
 function saveData(){ readInputs(); localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); alert("Сохранено"); }
 function resetData(){ state = JSON.parse(JSON.stringify(defaultState)); localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); renderAll(); }
 function num(v){ return Number(v)||0; }
+function setText(id,value){ const el=document.getElementById(id); if(el) el.textContent=value; }
+function setClass(id,value){ const el=document.getElementById(id); if(el) el.className=value; }
 function money(n){ return Math.round(n||0).toLocaleString("ru-RU")+" ₽"; }
 function pct(n){ return isFinite(n) ? Math.round(n*100)+"%" : "0%"; }
 function val(id){ const e=document.getElementById(id); if(!e) return 0; return e.type==="checkbox" ? e.checked : num(e.value); }
@@ -643,41 +650,41 @@ function forecastText(f100){
 
 function renderSummary(){
   const r=calc();
-  document.getElementById("totalPremium").textContent=money(r.total);
-  document.getElementById("formulaText").textContent=`${money(r.base)} × ${r.coef.toFixed(2)} + ${money(r.expert)}`;
-  document.getElementById("finalStrata").textContent=r.finalStrata;
-  document.getElementById("coef").textContent=r.coef.toFixed(2);
-  document.getElementById("expertPremium").textContent=money(r.expert);
-  document.getElementById("sumPOSPremium").textContent=money(r.posPremium);
-  document.getElementById("sumProductsPremium").textContent=money(r.productsPremium);
-  document.getElementById("sumDKPremium").textContent=money(r.dkPremium);
-  document.getElementById("basePremium").textContent=money(r.base);
+  setText("totalPremium", money(r.total));
+  setText("formulaText", `${money(r.base)} × ${r.coef.toFixed(2)} + ${money(r.expert)}`);
+  setText("finalStrata", r.finalStrata);
+  setText("coef", r.coef.toFixed(2));
+  setText("expertPremium", money(r.expert));
+  setText("sumPOSPremium", money(r.posPremium));
+  setText("sumProductsPremium", money(r.productsPremium));
+  setText("sumDKPremium", money(r.dkPremium));
+  setText("basePremium", money(r.base));
 
   renderScenarioInputs();
   const sc = scenarioCalc();
-  document.getElementById("scenarioPremium").textContent = money(sc.total);
-  document.getElementById("scenarioDelta").textContent = (sc.delta>=0 ? "+" : "") + money(sc.delta);
-  document.getElementById("scenarioDelta").className = "value " + (sc.delta>=0 ? "ok" : "bad");
-  document.getElementById("scenarioComment").textContent = scenarioText(sc);
+  setText("scenarioPremium", money(sc.total));
+  setText("scenarioDelta", (sc.delta>=0 ? "+" : "") + money(sc.delta));
+  setClass("scenarioDelta", "value " + (sc.delta>=0 ? "ok" : "bad"));
+  setText("scenarioComment", scenarioText(sc));
 
 
   const f100 = forecastPremium(1.0);
   const f110 = forecastPremium(1.1);
   const f120 = forecastPremium(1.2);
 
-  document.getElementById("forecastNow").textContent = money(r.total);
-  document.getElementById("forecast100").textContent = money(f100.total);
-  document.getElementById("forecast110").textContent = money(f110.total);
-  document.getElementById("forecast120").textContent = money(f120.total);
-  document.getElementById("forecastComment").textContent = forecastText(f100);
+  setText("forecastNow", money(r.total));
+  setText("forecast100", money(f100.total));
+  setText("forecast110", money(f110.total));
+  setText("forecast120", money(f120.total));
+  setText("forecastComment", forecastText(f100));
 
-  document.getElementById("planMainPOS").textContent = money(state.kpi.planPOS) + " / " + state.kpi.planPOSPieces + " шт.";
-  document.getElementById("planMainKRH").textContent = state.kpi.planKRH + " / " + state.kpi.planStart;
-  document.getElementById("planMainProducts").textContent = state.kpi.planSubs + " / " + state.kpi.planDebit;
-  document.getElementById("planMainDK").textContent = state.kpi.planDKPieces + " шт. / " + Math.round(state.kpi.planProtection*100) + "%";
-  document.getElementById("mainStatus").textContent=r.finalStrata<=3?"сильная зона":r.finalStrata<=5?"нужно добить":"риск премии";
-  document.getElementById("mainStatus").className="tag "+(r.finalStrata<=3?"ok":r.finalStrata<=5?"warn":"bad");
-  document.getElementById("progressList").innerHTML =
+  setText("planMainPOS", money(state.kpi.planPOS) + " / " + state.kpi.planPOSPieces + " шт.");
+  setText("planMainKRH", state.kpi.planKRH + " / " + state.kpi.planStart);
+  setText("planMainProducts", state.kpi.planSubs + " / " + state.kpi.planDebit);
+  setText("planMainDK", state.kpi.planDKPieces + " шт. / " + Math.round(state.kpi.planProtection*100) + "%");
+  setText("mainStatus", r.finalStrata<=3?"сильная зона":r.finalStrata<=5?"нужно добить":"риск премии");
+  setClass("mainStatus", "tag "+(r.finalStrata<=3?"ok":r.finalStrata<=5?"warn":"bad"));
+  if(document.getElementById("progressList")) document.getElementById("progressList").innerHTML =
     progress("POS сумма",r.posKPIAmount,state.kpi.planPOS,"₽")+
     progress("POS шт.",r.posPieces,state.kpi.planPOSPieces,"шт")+
     progress("ФЗ проникновение",r.fzPenetration,state.kpi.planFZ,"%")+
@@ -687,7 +694,7 @@ function renderSummary(){
     progress("ДК шт.",r.dkPieces,state.kpi.planDKPieces,"шт")+
     progress("Защита в ДК",r.protectionPercent,state.kpi.planProtection,"%")+
     progress("Дебет",r.debit,state.kpi.planDebit,"шт");
-  document.getElementById("recoList").innerHTML=recommendations(r).map((x,i)=>`<div class="reco"><div class="dot">${i+1}</div><div>${x}</div></div>`).join("");
+  if(document.getElementById("recoList")) document.getElementById("recoList").innerHTML=recommendations(r).map((x,i)=>`<div class="reco"><div class="dot">${i+1}</div><div>${x}</div></div>`).join("");
 }
 function renderAll(){ renderPOS(); renderProducts(); renderDK(); renderKPI(); renderSummary(); }
 function saveSilent(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
