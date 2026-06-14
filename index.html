@@ -37,25 +37,59 @@ label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}input,se
 </head>
 <body>
 <div class="app">
-<header><div><h1>Калькулятор премии</h1><div class="sub">принцип Excel: одна строка = один кредит / продукт</div></div><div class="pill">v3.3</div></header>
+<header><div><h1>Калькулятор премии</h1><div class="sub">принцип Excel: одна строка = один кредит / продукт</div></div><div class="pill">v4.1</div></header>
 
 <main>
 <div id="view-main" class="view active">
   <div class="hero">
-    <div class="label">Итоговая премия сейчас</div>
+    <div class="label">Полная фактическая премия</div>
     <div class="money" id="totalPremium">0 ₽</div>
-    <div class="note" id="formulaText">База × коэффициент + Эксперт</div>
+    <div class="note" id="formulaText">итог с учётом POS, ДК, продуктов, KPI и ЧП</div>
   </div>
 
   <div class="grid3">
-    <div class="metric"><div class="k">Страта</div><div class="v" id="finalStrata">—</div></div>
+    <div class="metric"><div class="k">Основная KPI</div><div class="v" id="mainKPIShort">—</div></div>
+    <div class="metric"><div class="k">После ЧП</div><div class="v" id="finalStrata">—</div></div>
     <div class="metric"><div class="k">Коэф.</div><div class="v" id="coef">—</div></div>
-    <div class="metric"><div class="k">База</div><div class="v" id="basePremium">0 ₽</div></div>
   </div>
 
   <section>
-    <div class="section-title"><h2>Мой сценарий</h2><span class="small">100% / вручную</span></div>
-    <div class="hint" style="margin-bottom:12px">Здесь можно проверить, сколько будет премия, если закрыть план на нужный процент или ввести свои значения.</div>
+    <div class="section-title"><h2>Деньги</h2><span class="tag" id="mainStatus">—</span></div>
+    <div class="row"><div class="name">Полная фактическая премия</div><div class="value" id="moneyFact">0 ₽</div></div>
+    <div class="row"><div class="name">Фокус-премия сейчас</div><div class="value" id="forecastNow">0 ₽</div></div>
+    <div class="row"><div class="name">Фокус-премия при 100%</div><div class="value" id="forecast100">0 ₽</div></div>
+    <div class="row"><div class="name">Фокус-премия по цели</div><div class="value" id="forecastTargetLikeExcel">0 ₽</div></div>
+    <div class="calc-line">Данные подтягиваются из POS, ДК, продуктов и KPI. Эксперт включается/выключается на вкладке “Планы”.</div>
+  </section>
+
+  <section>
+    <div class="section-title"><h2>KPI / страта</h2><span class="small">как в Excel</span></div>
+    <div class="row"><div class="name">Основная KPI</div><div class="value" id="mainStrata">—</div></div>
+    <div class="row"><div class="name">После ЧП</div><div class="value" id="finalStrataMirror">—</div></div>
+    <div class="row"><div class="name">Коэффициент</div><div class="value" id="coefMirror">—</div></div>
+    <div class="row"><div class="name">Эксперт</div><div class="value" id="expertPremium">0 ₽</div></div>
+  </section>
+
+  <section>
+    <div class="section-title"><h2>Что добить: фокус-план</h2><span class="small">факт / цель / осталось</span></div>
+    <div id="focusPlanTable"></div>
+  </section>
+
+  <section>
+    <div class="section-title"><h2>Примерная добавка к премии</h2><span class="small">до 100% и цели</span></div>
+    <div id="premiumAddTable"></div>
+  </section>
+
+  <section>
+    <div class="section-title"><h2>Премия по фокус-сценариям</h2><span class="small">как в Excel</span></div>
+    <div class="row"><div class="name">Фокус сейчас</div><div class="value" id="scenarioExcelNow">0 ₽</div></div>
+    <div class="row"><div class="name">Фокус 100%</div><div class="value" id="scenarioExcel100">0 ₽</div></div>
+    <div class="row"><div class="name">Фокус по цели</div><div class="value" id="scenarioExcelTarget">0 ₽</div></div>
+  </section>
+
+  <section>
+    <div class="section-title"><h2>Мой сценарий</h2><span class="small">ручной расчёт</span></div>
+    <div class="hint" style="margin-bottom:12px">Здесь можно проверить любой вариант: 100%, 110%, 120% или свои значения. Расчёт связан со всеми блоками.</div>
     <div class="form-grid">
       <div>
         <label>Режим</label>
@@ -84,16 +118,21 @@ label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}input,se
   </section>
 
   <section>
-    <div class="section-title"><h2>Что добить</h2><span class="tag" id="mainStatus">—</span></div>
-    <div id="recoList"></div>
+    <div class="section-title"><h2>Инфографика выполнения</h2><span class="small">факт / план</span></div>
+    <div id="progressList"></div>
   </section>
 
   <section>
-    <div class="section-title"><h2>Краткая разбивка</h2><span class="small">без повторов</span></div>
-    <div class="row"><div class="name">POS</div><div class="value" id="sumPOSPremium">0 ₽</div></div>
+    <div class="section-title"><h2>Связанные итоги</h2><span class="small">из рабочих вкладок</span></div>
+    <div class="row"><div class="name">POS премия</div><div class="value" id="sumPOSPremium">0 ₽</div></div>
     <div class="row"><div class="name">Продукты</div><div class="value" id="sumProductsPremium">0 ₽</div></div>
     <div class="row"><div class="name">ДК</div><div class="value" id="sumDKPremium">0 ₽</div></div>
-    <div class="row"><div class="name">Эксперт</div><div class="value" id="expertPremium">0 ₽</div></div>
+    <div class="row"><div class="name">База до KPI</div><div class="value" id="basePremium">0 ₽</div></div>
+  </section>
+
+  <section>
+    <div class="section-title"><h2>Что добить кратко</h2></div>
+    <div id="recoList"></div>
   </section>
 </div>
 
@@ -155,7 +194,7 @@ label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}input,se
 const POS_RATES = {"39%": {"value": 0.39, "rates": [0.017, 0.009, 0.026, 0.017, 0.031, 0.019, 0.048, 0.021, 0.051, 0.023, 0.055, 0.025]}, "32%": {"value": 0.32, "rates": [0.017, 0.009, 0.026, 0.017, 0.031, 0.019, 0.048, 0.021, 0.051, 0.023, 0.055, 0.025]}, "29,9%": {"value": 0.299, "rates": [0.016, 0.008, 0.025, 0.016, 0.03, 0.019, 0.042, 0.021, 0.049, 0.023, 0.053, 0.025]}, "26%": {"value": 0.26, "rates": [0.012, 0.005, 0.02, 0.01, 0.021, 0.011, 0.033, 0.02, 0.04, 0.021, 0.044, 0.022]}, "25%": {"value": 0.25, "rates": [0.011, 0.004, 0.019, 0.009, 0.02, 0.01, 0.027, 0.011, 0.035, 0.012, 0.039, 0.013]}, "23%": {"value": 0.23, "rates": [0.007, 0.002, 0.012, 0.005, 0.018, 0.011, 0.02, 0.011, 0.025, 0.011, 0.03, 0.011]}, "21%": {"value": 0.21, "rates": [0.005, 0.001, 0.009, 0.0015, 0.01, 0.002, 0.013, 0.005, 0.018, 0.008, 0.02, 0.009]}, "20%": {"value": 0.2, "rates": [0.005, 0.001, 0.008, 0.0015, 0.009, 0.002, 0.012, 0.005, 0.017, 0.007, 0.019, 0.008]}, "19%": {"value": 0.19, "rates": [0, 0, 0.004, 0.001, 0.005, 0.0015, 0.01, 0.0045, 0.013, 0.0065, 0.016, 0.0075]}, "18%": {"value": 0.18, "rates": [0, 0, 0.003, 0.0005, 0.004, 0.001, 0.008, 0.004, 0.01, 0.006, 0.015, 0.007]}, "17%": {"value": 0.17, "rates": [0, 0, 0.002, 0.0002, 0.003, 0.0005, 0.007, 0.0035, 0.009, 0.0055, 0.014, 0.0065]}, "16%": {"value": 0.16, "rates": [0, 0, 0.001, 0.0001, 0.002, 0.0005, 0.006, 0.003, 0.008, 0.005, 0.013, 0.006]}, "0x0x6 25,36%": {"value": 0.2536, "rates": [0.005, 0.001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, "0x0x12 24,28%": {"value": 0.2428, "rates": [0, 0, 0, 0, 0.012, 0.002, 0, 0, 0, 0, 0, 0]}, "0x0x24 18,57%": {"value": 0.1857, "rates": [0, 0, 0, 0, 0, 0, 0, 0, 0.016, 0.002, 0, 0]}};
 const PRODUCT_DEFAULTS = [{"section": "Карты Халва", "name": "КРХ с лимитом", "qty": 7, "rate": 100, "hint": "100 ₽ за карту"}, {"section": "Карты Халва", "name": "КРХ 0.1 с транзакцией", "qty": 0, "rate": 100, "hint": "100 ₽ за карту"}, {"section": "Карты Халва", "name": "Старт КРХ / транзакция", "qty": 6, "rate": 500, "hint": "500 ₽ за старт/транзакцию"}, {"section": "Подписки", "name": "Халва.Десятка годовая", "qty": 4, "rate": 500, "hint": "500 ₽ за подписку"}, {"section": "Подписки", "name": "Халва.Десятка ежемесячная / Все и везде", "qty": 0, "rate": 200, "hint": "200 ₽ за подписку"}, {"section": "Подписки", "name": "Оптима годовая", "qty": 0, "rate": 500, "hint": "500 ₽ за подписку"}, {"section": "Подписки", "name": "Оптима ежемесячная", "qty": 0, "rate": 300, "hint": "300 ₽ за подписку"}, {"section": "Дебет / вклады", "name": "Дебетовая карта с % на остаток", "qty": 0, "rate": 250, "hint": "250 ₽ за оформление"}, {"section": "Дебет / вклады", "name": "Дебетовая карта с кешбеком 2%", "qty": 1, "rate": 100, "hint": "100 ₽ за оформление"}, {"section": "Дебет / вклады", "name": "Дебетовая КРХ резидента", "qty": 0, "rate": 100, "hint": "100 ₽ за оформление"}, {"section": "Дебет / вклады", "name": "Дебетовая КРХ нерезидента + годовая подписка", "qty": 0, "rate": 700, "hint": "700 ₽ за оформление"}, {"section": "Дебет / вклады", "name": "Дебетовая КРХ нерезидента + ежемесячная подписка", "qty": 0, "rate": 200, "hint": "200 ₽ за оформление"}, {"section": "Дебет / вклады", "name": "Оформление вклада", "qty": 0, "rate": 200, "hint": "200 ₽ за оформление"}, {"section": "КП Мультиполис", "name": "Мультиполис 1 999", "qty": 0, "rate": 200, "hint": "200 ₽ за мультиполис"}, {"section": "КП Мультиполис", "name": "Мультиполис 2 999", "qty": 0, "rate": 400, "hint": "400 ₽ за мультиполис"}, {"section": "КП Мультиполис", "name": "Мультиполис 3 999", "qty": 0, "rate": 500, "hint": "500 ₽ за мультиполис"}, {"section": "Пакеты с защитой", "name": "FIS: пакет 2 / 9 999", "qty": 0, "rate": 700, "hint": "700 ₽ за пакет"}, {"section": "Пакеты с защитой", "name": "FIS: пакет 3 / 14 999", "qty": 0, "rate": 750, "hint": "750 ₽ за пакет"}, {"section": "Пакеты с защитой", "name": "FIS: пакет 4 / 19 999", "qty": 0, "rate": 1000, "hint": "1000 ₽ за пакет"}, {"section": "Пакеты с защитой", "name": "FIS: пакет 5 / 29 999", "qty": 0, "rate": 1700, "hint": "1700 ₽ за пакет"}, {"section": "Пакеты с защитой", "name": "FIS: пакет 6 / 39 999", "qty": 0, "rate": 2000, "hint": "2000 ₽ за пакет"}, {"section": "Пакеты с защитой", "name": "FIS: пакет 7 / 49 999", "qty": 0, "rate": 2500, "hint": "2500 ₽ за пакет"}, {"section": "Пакеты с защитой", "name": "FIS: пакет 8 / 59 999", "qty": 0, "rate": 3000, "hint": "3000 ₽ за пакет"}, {"section": "Пакеты с защитой", "name": "FIS: пакет 9 / 69 999", "qty": 0, "rate": 3500, "hint": "3500 ₽ за пакет"}, {"section": "Пакеты с защитой", "name": "FIS: пакет 10 / 79 999", "qty": 0, "rate": 4000, "hint": "4000 ₽ за пакет"}, {"section": "Пакеты с защитой", "name": "Кредит с ФЗ+ТП: пакет 1 / 4 999", "qty": 0, "rate": 500, "hint": "500 ₽ за пакет"}, {"section": "Пакеты с защитой", "name": "Кредит с ФЗ+ТП: пакет 2 / 9 999", "qty": 0, "rate": 1000, "hint": "1000 ₽ за пакет"}, {"section": "Пакеты с защитой", "name": "Кредит с ФЗ+ТП: пакет 3 / 14 999", "qty": 0, "rate": 1500, "hint": "1500 ₽ за пакет"}, {"section": "Пакеты с защитой", "name": "Кредит с ФЗ+ТП: пакет 4 / 19 999", "qty": 0, "rate": 2000, "hint": "2000 ₽ за пакет"}, {"section": "Пакеты с защитой", "name": "Кредит с ФЗ+ТП: пакет 5 / 29 999", "qty": 0, "rate": 3000, "hint": "3000 ₽ за пакет"}, {"section": "Пакеты с защитой", "name": "Кредит с ФЗ+ТП: пакет 6 / 39 999", "qty": 0, "rate": 4000, "hint": "4000 ₽ за пакет"}, {"section": "Пакеты с защитой", "name": "Кредит с ФЗ+ТП: пакет 7 / 49 999", "qty": 0, "rate": 5000, "hint": "5000 ₽ за пакет"}, {"section": "Пакеты с защитой", "name": "Кредит с ФЗ+ТП: пакет 8 / 59 999", "qty": 0, "rate": 6000, "hint": "6000 ₽ за пакет"}, {"section": "Пакеты с защитой", "name": "Кредит с ФЗ+ТП: пакет 9 / 69 999", "qty": 0, "rate": 7000, "hint": "7000 ₽ за пакет"}, {"section": "Пакеты с защитой", "name": "Кредит с ФЗ+ТП: пакет 10 / 79 999", "qty": 0, "rate": 8000, "hint": "8000 ₽ за пакет"}];
 const DK_TYPES = [{"name": "ДК / ДКПЗА через FIS с ФЗ", "rate": 0.015, "fixed": 0, "limit": 5000, "inPOS": true}, {"name": "КНК через ЛИД только с ФЗ", "rate": 0.01, "fixed": 0, "limit": 5000, "inPOS": true}, {"name": "КНК зарплатникам без ФЗ, ТП от 9 999", "rate": 0.01, "fixed": 0, "limit": 5000, "inPOS": false}, {"name": "КНК стабильный через FIS без ФЗ, ТП от 9 999", "rate": 0.015, "fixed": 0, "limit": 5000, "inPOS": false}, {"name": "КНК стабильный через ЛИД без ФЗ, ТП от 9 999", "rate": 0.01, "fixed": 0, "limit": 5000, "inPOS": false}, {"name": "КНК стабильный с ФЗ", "rate": 0, "fixed": 0, "limit": 5000, "inPOS": true}, {"name": "ДКПЗН", "rate": 0, "fixed": 2000, "limit": 0, "inPOS": false}, {"name": "Автокредит / ДКПЗА через ЛИД", "rate": 0, "fixed": 1250, "limit": 0, "inPOS": false}, {"name": "ДК МКК Быстрые покупки без ФЗ", "rate": 0, "fixed": 1000, "limit": 0, "inPOS": false}, {"name": "ДК МКК Быстрые покупки с ФЗ", "rate": 0, "fixed": 1500, "limit": 0, "inPOS": true}];
-const STORAGE_KEY = "premiumCalculatorExcelLikeV3";
+const STORAGE_KEY = "premiumCalculatorExcelLikeV4_1";
 
 const defaultState = {
   pos: [
@@ -194,7 +233,7 @@ function loadData(){
     const raw = localStorage.getItem(STORAGE_KEY);
     if(raw) {
       const saved = JSON.parse(raw);
-      if(saved && saved.pos && saved.products && saved.kpi) {
+      if(saved && Array.isArray(saved.pos) && saved.pos.length && Array.isArray(saved.products) && saved.products.length && saved.kpi) {
         if(!saved.scenario) saved.scenario = JSON.parse(JSON.stringify(defaultState.scenario));
         return saved;
       }
@@ -202,10 +241,11 @@ function loadData(){
   } catch(e) {}
   return JSON.parse(JSON.stringify(defaultState));
 }
-function saveData(){ readInputs(); localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); alert("Сохранено"); }
+function saveData(){ readKPI(); localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); alert("Сохранено"); }
 function resetData(){ state = JSON.parse(JSON.stringify(defaultState)); localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); renderAll(); }
 function num(v){ return Number(v)||0; }
 function setText(id,value){ const el=document.getElementById(id); if(el) el.textContent=value; }
+function setHTML(id,value){ const el=document.getElementById(id); if(el) el.innerHTML=value; }
 function setClass(id,value){ const el=document.getElementById(id); if(el) el.className=value; }
 function money(n){ return Math.round(n||0).toLocaleString("ru-RU")+" ₽"; }
 function pct(n){ return isFinite(n) ? Math.round(n*100)+"%" : "0%"; }
@@ -648,6 +688,50 @@ function forecastText(f100){
   return "До 100%: " + parts.join(" · ");
 }
 
+
+function excelLikeFocusRows(r){
+  const target = num(state.kpi.targetPercent)/100 || 1;
+  const rows = [
+    ["POS сумма, ₽", r.posKPIAmount, state.kpi.planPOS, Math.max(state.kpi.planPOS-r.posKPIAmount,0), state.kpi.planPOS*target, Math.max(state.kpi.planPOS*target-r.posKPIAmount,0), "основная KPI + премия"],
+    ["POS в штуках", r.posPieces, state.kpi.planPOSPieces, Math.max(state.kpi.planPOSPieces-r.posPieces,0), Math.ceil(state.kpi.planPOSPieces*target), Math.max(Math.ceil(state.kpi.planPOSPieces*target)-r.posPieces,0), "ЧП / POS ДНС"],
+    ["КРХ с лимитом / 0.1", r.krh, state.kpi.planKRH, Math.max(state.kpi.planKRH-r.krh,0), Math.ceil(state.kpi.planKRH*target), Math.max(Math.ceil(state.kpi.planKRH*target)-r.krh,0), "ЧП + премия"],
+    ["Старт КРХ", r.startKRH, state.kpi.planStart, Math.max(state.kpi.planStart-r.startKRH,0), Math.ceil(state.kpi.planStart*target), Math.max(Math.ceil(state.kpi.planStart*target)-r.startKRH,0), "основная KPI + премия"],
+    ["Подписки", r.subs, state.kpi.planSubs, Math.max(state.kpi.planSubs-r.subs,0), Math.ceil(state.kpi.planSubs*target), Math.max(Math.ceil(state.kpi.planSubs*target)-r.subs,0), "ЧП + премия"],
+    ["Дебетовые карты", r.debit, state.kpi.planDebit, Math.max(state.kpi.planDebit-r.debit,0), Math.ceil(state.kpi.planDebit*target), Math.max(Math.ceil(state.kpi.planDebit*target)-r.debit,0), "ЧП + премия"],
+    ["ДК сумма, ₽", r.dkAmount, state.kpi.planDKAmount, Math.max(state.kpi.planDKAmount-r.dkAmount,0), state.kpi.planDKAmount*target, Math.max(state.kpi.planDKAmount*target-r.dkAmount,0), "контроль плана / ЧП"]
+  ];
+  return rows.map(row=>{
+    const moneyRow = row[0].includes("₽");
+    return `<div class="row"><div class="name">${row[0]}<br><span class="small">${row[6]}</span></div><div class="value">${moneyRow?money(row[1]):row[1]} / ${moneyRow?money(row[2]):row[2]}<br><span class="small">ост. ${moneyRow?money(row[3]):row[3]} | цель ост. ${moneyRow?money(row[5]):row[5]}</span></div></div>`;
+  }).join("");
+}
+
+function excelLikeAddRows(r){
+  const target = num(state.kpi.targetPercent)/100 || 1;
+  const avgPOS = r.posAmount>0 ? r.posPremium/r.posAmount : 0.035;
+  const pos100 = Math.max(state.kpi.planPOS-r.posKPIAmount,0)*avgPOS;
+  const posTarget = Math.max(state.kpi.planPOS*target-r.posKPIAmount,0)*avgPOS;
+  const krh100 = Math.max(state.kpi.planKRH-r.krh,0)*100;
+  const krhTarget = Math.max(Math.ceil(state.kpi.planKRH*target)-r.krh,0)*100;
+  const start100 = Math.max(state.kpi.planStart-r.startKRH,0)*500;
+  const startTarget = Math.max(Math.ceil(state.kpi.planStart*target)-r.startKRH,0)*500;
+  const subs100 = Math.max(state.kpi.planSubs-r.subs,0)*500;
+  const subsTarget = Math.max(Math.ceil(state.kpi.planSubs*target)-r.subs,0)*500;
+  const debit100 = Math.max(state.kpi.planDebit-r.debit,0)*100;
+  const debitTarget = Math.max(Math.ceil(state.kpi.planDebit*target)-r.debit,0)*100;
+  const rows = [
+    ["POS сумма", avgPOS, pos100, posTarget, "остаток POS × средняя ставка POS"],
+    ["КРХ с лимитом", 100, krh100, krhTarget, "остаток КРХ × 100 ₽"],
+    ["Старт КРХ", 500, start100, startTarget, "остаток стартов × 500 ₽"],
+    ["Подписки", 500, subs100, subsTarget, "остаток подписок × средняя премия"],
+    ["Дебетовые карты", 100, debit100, debitTarget, "остаток дебета × средняя премия"],
+  ];
+  const total100 = rows.reduce((s,x)=>s+x[2],0);
+  const totalTarget = rows.reduce((s,x)=>s+x[3],0);
+  return rows.map(x=>`<div class="row"><div class="name">${x[0]}<br><span class="small">${x[4]}</span></div><div class="value">${typeof x[1]==="number"&&x[1]<1?(x[1]*100).toFixed(2)+"%":money(x[1])}<br><span class="small">до 100% ${money(x[2])} · цель ${money(x[3])}</span></div></div>`).join("") +
+    `<div class="row"><div class="name"><b>Итого добавка</b></div><div class="value"><b>${money(total100)}</b><br><span class="small">по цели ${money(totalTarget)}</span></div></div>`;
+}
+
 function renderSummary(){
   const r=calc();
   setText("totalPremium", money(r.total));
@@ -659,6 +743,18 @@ function renderSummary(){
   setText("sumProductsPremium", money(r.productsPremium));
   setText("sumDKPremium", money(r.dkPremium));
   setText("basePremium", money(r.base));
+
+  setText("mainKPIShort", r.mainStrata);
+  setText("moneyFact", money(r.total));
+  setText("finalStrataMirror", r.finalStrata);
+  setText("coefMirror", r.coef.toFixed(2));
+  setText("forecastTargetLikeExcel", document.getElementById("forecast120") ? document.getElementById("forecast120").textContent : money(r.total));
+  setText("scenarioExcelNow", money(r.total));
+  setText("scenarioExcel100", document.getElementById("forecast100") ? document.getElementById("forecast100").textContent : money(r.total));
+  setText("scenarioExcelTarget", document.getElementById("forecast120") ? document.getElementById("forecast120").textContent : money(r.total));
+  setHTML("focusPlanTable", excelLikeFocusRows(r));
+  setHTML("premiumAddTable", excelLikeAddRows(r));
+
 
   renderScenarioInputs();
   const sc = scenarioCalc();
