@@ -1,0 +1,661 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Премия" />
+  <meta name="theme-color" content="#f6f4ef" />
+  <title>Калькулятор премии</title>
+  <style>
+    :root{
+      --bg:#f6f4ef;
+      --card:#ffffff;
+      --ink:#18191f;
+      --muted:#74777f;
+      --line:#e7e2d8;
+      --soft:#f1ede4;
+      --accent:#342c20;
+      --good:#177245;
+      --warn:#c98012;
+      --bad:#bd2d2d;
+      --blue:#2e5aac;
+      --shadow: 0 18px 45px rgba(37,31,22,.10);
+      --radius:24px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,Arial,sans-serif}
+    body{min-height:100vh;padding: max(16px, env(safe-area-inset-top)) 14px max(92px, env(safe-area-inset-bottom));}
+    .app{max-width:520px;margin:0 auto}
+    header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin:8px 2px 18px}
+    h1{font-size:28px;line-height:1;margin:0;letter-spacing:-.7px}
+    .subtitle{font-size:13px;color:var(--muted);margin-top:6px;line-height:1.3}
+    .pill{border:1px solid var(--line);background:rgba(255,255,255,.62);padding:8px 10px;border-radius:999px;font-size:12px;color:var(--muted);white-space:nowrap}
+    .hero{background:linear-gradient(145deg,#2f2a20,#151617);color:#fff;border-radius:30px;padding:22px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+    .hero:after{content:"";position:absolute;right:-40px;top:-50px;width:170px;height:170px;border-radius:50%;background:rgba(255,255,255,.08)}
+    .hero .label{font-size:13px;opacity:.72}
+    .money{font-size:45px;font-weight:800;line-height:1.05;letter-spacing:-1.6px;margin:8px 0}
+    .hero .note{font-size:13px;opacity:.75}
+    .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}
+    .metric{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:13px 12px;box-shadow:0 10px 25px rgba(37,31,22,.06)}
+    .metric .k{font-size:12px;color:var(--muted);white-space:nowrap}
+    .metric .v{font-size:21px;font-weight:800;margin-top:5px;letter-spacing:-.4px}
+    section{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:17px;margin:12px 0;box-shadow:0 10px 28px rgba(37,31,22,.055)}
+    .section-title{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:14px}
+    h2{font-size:18px;margin:0;letter-spacing:-.25px}
+    .small{font-size:12px;color:var(--muted)}
+    .row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
+    .row:first-child{border-top:0;padding-top:0}
+    .row .name{font-size:14px;color:#333;line-height:1.25}
+    .row .value{font-weight:750;text-align:right}
+    .bar{height:9px;background:#ece7dc;border-radius:99px;overflow:hidden;margin:9px 0 3px}
+    .fill{height:100%;border-radius:99px;background:var(--accent);width:0;transition:.25s ease}
+    .fill.good{background:var(--good)}
+    .fill.warn{background:var(--warn)}
+    .fill.bad{background:var(--bad)}
+    .progress-item{padding:11px 0;border-top:1px solid var(--line)}
+    .progress-item:first-child{border-top:0}
+    .progress-top{display:flex;justify-content:space-between;gap:8px;font-size:14px}
+    .progress-top b{font-size:14px}
+    .progress-bottom{display:flex;justify-content:space-between;color:var(--muted);font-size:12px}
+    label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px}
+    input,select{width:100%;appearance:none;border:1px solid var(--line);background:#fbfaf7;border-radius:15px;padding:13px 12px;font-size:16px;color:var(--ink);outline:none}
+    input:focus,select:focus{border-color:#b8a67f;box-shadow:0 0 0 4px rgba(184,166,127,.15)}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .form-grid .full{grid-column:1/-1}
+    .btns{display:flex;gap:10px;flex-wrap:wrap}
+    button{border:0;background:var(--accent);color:white;border-radius:16px;padding:13px 15px;font-size:15px;font-weight:750;cursor:pointer}
+    button.secondary{background:#ece7dc;color:#30291f}
+    button.ghost{background:transparent;color:#30291f;border:1px solid var(--line)}
+    .tabs{position:fixed;left:0;right:0;bottom:0;padding:8px 10px max(8px, env(safe-area-inset-bottom));background:rgba(246,244,239,.88);backdrop-filter:blur(16px);border-top:1px solid rgba(222,216,204,.8);z-index:10}
+    .tabbar{max-width:520px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+    .tab{background:transparent;border:0;color:var(--muted);padding:9px 3px;border-radius:16px;font-size:11px;font-weight:700}
+    .tab.active{background:var(--card);color:var(--ink);box-shadow:0 8px 22px rgba(37,31,22,.08)}
+    .view{display:none}
+    .view.active{display:block}
+    .pos-card{border:1px solid var(--line);border-radius:20px;padding:14px;background:#fbfaf7;margin:10px 0}
+    .pos-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+    .pos-head b{font-size:15px}
+    .remove{font-size:13px;color:var(--bad);background:transparent;padding:6px;border:0}
+    .switch-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .switch{display:flex;gap:8px;align-items:center;justify-content:space-between;border:1px solid var(--line);background:white;border-radius:14px;padding:10px 11px;font-size:14px}
+    .switch input{width:auto}
+    .hint{font-size:13px;color:var(--muted);line-height:1.45;background:var(--soft);border-radius:18px;padding:13px}
+    .recommendation{display:flex;gap:10px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--line)}
+    .recommendation:first-child{border-top:0}
+    .dot{width:22px;height:22px;min-width:22px;border-radius:50%;background:#efe3c5;color:#6a4c00;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800}
+    .tag{display:inline-flex;align-items:center;border-radius:99px;padding:5px 9px;font-size:12px;font-weight:700;background:#f0eadf;color:#42382a}
+    .status-good{color:var(--good)}
+    .status-warn{color:var(--warn)}
+    .status-bad{color:var(--bad)}
+    .footer-note{color:var(--muted);font-size:12px;line-height:1.45;text-align:center;margin:18px 6px}
+    @media (max-width:380px){
+      .money{font-size:38px}
+      .grid3{gap:8px}
+      .metric{padding:11px 9px}
+      .metric .v{font-size:18px}
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div>
+      <h1>Калькулятор премии</h1>
+      <div class="subtitle">Мобильная веб-версия по твоему Excel-калькулятору</div>
+    </div>
+    <div class="pill">iPhone · Safari</div>
+  </header>
+
+  <main>
+    <div id="view-main" class="view active">
+      <div class="hero">
+        <div class="label">Полная фактическая премия</div>
+        <div class="money" id="totalPremium">0 ₽</div>
+        <div class="note" id="formulaText">База × коэффициент + Эксперт</div>
+      </div>
+
+      <div class="grid3">
+        <div class="metric"><div class="k">Страта</div><div class="v" id="finalStrata">—</div></div>
+        <div class="metric"><div class="k">Коэф.</div><div class="v" id="coef">—</div></div>
+        <div class="metric"><div class="k">Эксперт</div><div class="v" id="expertPremium">—</div></div>
+      </div>
+
+      <section>
+        <div class="section-title"><h2>Фокус-прогноз</h2><span class="tag" id="mainStatus">—</span></div>
+        <div class="row"><div class="name">Премия сейчас</div><div class="value" id="focusNow">0 ₽</div></div>
+        <div class="row"><div class="name">При 100% по фокусу</div><div class="value" id="focus100">0 ₽</div></div>
+        <div class="row"><div class="name">По цели прогноза</div><div class="value" id="focusTarget">0 ₽</div></div>
+      </section>
+
+      <section>
+        <div class="section-title"><h2>Инфографика выполнения</h2><span class="small">факт / план</span></div>
+        <div id="progressList"></div>
+      </section>
+
+      <section>
+        <div class="section-title"><h2>Аудит расчёта</h2></div>
+        <div class="row"><div class="name">Базовая премия POS</div><div class="value" id="posPremium">0 ₽</div></div>
+        <div class="row"><div class="name">Премия продуктов</div><div class="value" id="productsPremium">0 ₽</div></div>
+        <div class="row"><div class="name">Основная KPI страта</div><div class="value" id="mainStrata">—</div></div>
+        <div class="row"><div class="name">Корректировка ЧП</div><div class="value" id="chpAdj">—</div></div>
+      </section>
+    </div>
+
+    <div id="view-input" class="view">
+      <section>
+        <div class="section-title">
+          <h2>POS кредиты</h2>
+          <button class="secondary" onclick="addPOS()">+ POS</button>
+        </div>
+        <div class="hint">Премия POS считается по ставке, сроку, ФЗ, ВИС и комплексу POS+КРХ. Лимит по строке — 4 500 ₽ + бонусы.</div>
+        <div id="posList"></div>
+      </section>
+
+      <section>
+        <div class="section-title"><h2>Продукты</h2></div>
+        <div class="form-grid">
+          <div><label>КРХ с лимитом</label><input id="krhLimit" type="number" inputmode="numeric" /></div>
+          <div><label>КРХ 0.1 с транз.</label><input id="krh01" type="number" inputmode="numeric" /></div>
+          <div><label>Старт КРХ</label><input id="startKRH" type="number" inputmode="numeric" /></div>
+          <div><label>Подписки годовые</label><input id="subsAnnual" type="number" inputmode="numeric" /></div>
+          <div><label>Подписки другие</label><input id="subsOther" type="number" inputmode="numeric" /></div>
+          <div><label>Дебетовые карты</label><input id="debitCards" type="number" inputmode="numeric" /></div>
+          <div class="full"><label>Доп. премия вручную, ₽</label><input id="extraPremium" type="number" inputmode="decimal" /></div>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-title"><h2>Денежные кредиты</h2></div>
+        <div class="form-grid">
+          <div><label>Сумма ДК, ₽</label><input id="dkAmount" type="number" inputmode="decimal" /></div>
+          <div><label>Премия ДК, ₽</label><input id="dkPremium" type="number" inputmode="decimal" /></div>
+          <div class="full switch"><span>Учитывать ДК в POS-план</span><input id="dkInPOS" type="checkbox" /></div>
+        </div>
+      </section>
+    </div>
+
+    <div id="view-kpi" class="view">
+      <section>
+        <div class="section-title"><h2>Планы KPI</h2></div>
+        <div class="form-grid">
+          <div><label>POS сумма, ₽</label><input id="planPOS" type="number" inputmode="decimal" /></div>
+          <div><label>POS шт.</label><input id="planPOSPieces" type="number" inputmode="numeric" /></div>
+          <div><label>ФЗ норма</label><input id="planFZ" type="number" step="0.01" inputmode="decimal" /></div>
+          <div><label>ЦТК сумма, ₽</label><input id="planCTK" type="number" inputmode="decimal" /></div>
+          <div><label>Старт КРХ</label><input id="planStart" type="number" inputmode="numeric" /></div>
+          <div><label>КРХ премируемые</label><input id="planKRH" type="number" inputmode="numeric" /></div>
+          <div><label>Подписки</label><input id="planSubs" type="number" inputmode="numeric" /></div>
+          <div><label>Дебет</label><input id="planDebit" type="number" inputmode="numeric" /></div>
+          <div><label>ДК сумма, ₽</label><input id="planDK" type="number" inputmode="decimal" /></div>
+          <div><label>Цель прогноза, %</label><input id="targetPercent" type="number" inputmode="decimal" /></div>
+          <div><label>Take rate факт</label><input id="takeRateFact" type="number" step="0.01" inputmode="decimal" /></div>
+          <div class="switch"><span>Эксперт 20 000 ₽</span><input id="includeExpert" type="checkbox" /></div>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-title"><h2>Как считается страта</h2></div>
+        <div class="hint">
+          Основные KPI дают сумму страт: POS сумма, ФЗ, ЦТК, Старт КРХ. Потом добавляется корректировка ЧП: КРХ, Take rate, подписки, POS шт., дебет, ДК. Итоговая страта превращается в коэффициент премии.
+        </div>
+      </section>
+    </div>
+
+    <div id="view-reco" class="view">
+      <section>
+        <div class="section-title"><h2>Что добить</h2><span class="small">приоритет</span></div>
+        <div id="recoList"></div>
+      </section>
+
+      <section>
+        <div class="section-title"><h2>Действия</h2></div>
+        <div class="btns">
+          <button onclick="saveData()">Сохранить</button>
+          <button class="secondary" onclick="resetData()">Вернуть пример</button>
+          <button class="ghost" onclick="shareSummary()">Скопировать итог</button>
+        </div>
+        <p class="footer-note">Данные сохраняются прямо в браузере на iPhone. Если очистить Safari, сохранение может пропасть.</p>
+      </section>
+    </div>
+  </main>
+</div>
+
+<div class="tabs">
+  <div class="tabbar">
+    <button class="tab active" data-view="main">Главная</button>
+    <button class="tab" data-view="input">Ввод</button>
+    <button class="tab" data-view="kpi">KPI</button>
+    <button class="tab" data-view="reco">Добить</button>
+  </div>
+</div>
+
+<script>
+const defaultState = {
+  pos: [
+    {amount:135099, term:24, rate:0.299, fz:true, vis:true, ctk:true, complex:true},
+    {amount:62799, term:24, rate:0.299, fz:true, vis:true, ctk:true, complex:false},
+    {amount:175406, term:24, rate:0.26, fz:true, vis:true, ctk:true, complex:true},
+    {amount:82697, term:24, rate:0.299, fz:true, vis:true, ctk:true, complex:false}
+  ],
+  products: {
+    krhLimit:7, krh01:0, startKRH:6,
+    subsAnnual:4, subsOther:0,
+    debitCards:1, extraPremium:0
+  },
+  dk: {amount:0, premium:0, inPOS:false},
+  kpi: {
+    planPOS:550000, planPOSPieces:7, planFZ:0.8, planCTK:385000,
+    planStart:7, planKRH:9, planSubs:7, planDebit:3, planDK:400000,
+    targetPercent:120, takeRateFact:0, includeExpert:true
+  }
+};
+
+let state = loadData();
+
+const posRateTable = {
+  0.39:[.017,.009,.026,.017,.031,.019,.048,.021,.051,.023,.055,.025],
+  0.32:[.017,.009,.026,.017,.031,.019,.048,.021,.051,.023,.055,.025],
+  0.299:[.016,.008,.025,.016,.030,.019,.042,.021,.049,.023,.053,.025],
+  0.26:[.012,.005,.020,.010,.021,.011,.033,.020,.040,.021,.044,.022],
+  0.25:[.011,.004,.019,.009,.020,.010,.027,.011,.035,.012,.039,.013],
+  0.23:[.007,.002,.012,.005,.018,.011,.020,.011,.025,.011,.030,.011],
+  0.21:[.005,.001,.009,.0015,.010,.002,.013,.005,.018,.008,.020,.009],
+  0.20:[.005,.001,.008,.0015,.009,.002,.012,.005,.017,.007,.019,.008],
+  0.19:[0,0,.004,.001,.005,.0015,.010,.0045,.013,.0065,.016,.0075],
+  0.18:[0,0,.003,.0005,.004,.001,.008,.004,.010,.006,.015,.007],
+  0.17:[0,0,.002,.0002,.003,.0005,.007,.0035,.009,.0055,.014,.0065],
+  0.16:[0,0,.001,.0001,.002,.0005,.006,.003,.008,.005,.013,.006]
+};
+
+function loadData(){
+  try {
+    const raw = localStorage.getItem("premiumCalcStateV2");
+    if(raw) return JSON.parse(raw);
+  } catch(e){}
+  return JSON.parse(JSON.stringify(defaultState));
+}
+
+function saveData(){
+  readInputs();
+  localStorage.setItem("premiumCalcStateV2", JSON.stringify(state));
+  alert("Сохранено на этом iPhone");
+}
+
+function resetData(){
+  state = JSON.parse(JSON.stringify(defaultState));
+  renderAll();
+}
+
+function money(n){
+  return Math.round(n || 0).toLocaleString("ru-RU") + " ₽";
+}
+
+function pct(n){
+  if(!isFinite(n)) return "0%";
+  return Math.round(n*100) + "%";
+}
+
+function num(v){ return Number(v) || 0; }
+
+function closestRate(rate){
+  const keys = Object.keys(posRateTable).map(Number);
+  let best = keys[0], diff = Math.abs(rate - best);
+  for(const k of keys){
+    const d = Math.abs(rate-k);
+    if(d < diff){ best=k; diff=d; }
+  }
+  return best;
+}
+
+function termBucket(term, fz){
+  let pair = 0;
+  if(term <= 6) pair = 0;
+  else if(term <= 11) pair = 1;
+  else if(term <= 17) pair = 2;
+  else if(term <= 23) pair = 3;
+  else if(term <= 30) pair = 4;
+  else pair = 5;
+  return pair*2 + (fz ? 0 : 1);
+}
+
+function posRate(row){
+  const rate = closestRate(num(row.rate));
+  const table = posRateTable[rate] || [];
+  return table[termBucket(num(row.term), !!row.fz)] || 0;
+}
+
+function posPremium(row){
+  if(!num(row.amount)) return 0;
+  const base = Math.min(num(row.amount) * posRate(row), 4500);
+  return base + (row.vis ? 250 : 0) + (row.complex ? 300 : 0);
+}
+
+function strataDefault(fact, plan){
+  if(plan <= 0) return 20;
+  const p = fact / plan;
+  if(p >= 1.2) return 1;
+  if(p >= 1.1) return 2;
+  if(p >= 1.0) return 3;
+  if(p >= .9) return 4;
+  if(p >= .8) return 5;
+  if(p >= .7) return 6;
+  if(p >= .6) return 7;
+  if(p >= .5) return 8;
+  if(p >= .4) return 9;
+  if(p >= .3) return 10;
+  return 20;
+}
+
+function strataFZ(fact, plan){
+  if(plan <= 0) return 20;
+  const p = fact / plan;
+  if(p >= 1.2) return 2;
+  if(p >= 1.1) return 3;
+  if(p >= 1.0) return 4;
+  if(p >= .9) return 5;
+  if(p >= .8) return 6;
+  if(p >= .7) return 7;
+  if(p >= .6) return 8;
+  if(p >= .5) return 9;
+  if(p >= .4) return 10;
+  return 20;
+}
+
+function aggregateStrata(sum){
+  if(sum <= 4) return 1;
+  if(sum < 8) return 2;
+  if(sum < 14) return 3;
+  if(sum < 18) return 4;
+  if(sum < 22) return 5;
+  if(sum < 26) return 6;
+  if(sum < 30) return 7;
+  if(sum < 34) return 8;
+  if(sum < 38) return 9;
+  if(sum < 42) return 10;
+  return 20;
+}
+
+function coefficient(s){
+  if(s === 1) return 1.15;
+  if(s === 2) return 1.05;
+  if(s === 3 || s === 4) return 1;
+  if(s === 5) return .8;
+  if(s === 6) return .7;
+  if(s === 7) return .6;
+  if(s === 8 || s === 9) return .3;
+  if(s === 10) return .2;
+  return .1;
+}
+
+function calc(){
+  const posAmount = state.pos.reduce((a,r)=>a+num(r.amount),0);
+  const posPieces = state.pos.filter(r=>num(r.amount)>0).length;
+  const posFZAmount = state.pos.filter(r=>r.fz).reduce((a,r)=>a+num(r.amount),0);
+  const ctkAmount = state.pos.filter(r=>r.ctk).reduce((a,r)=>a+num(r.amount),0);
+  const posPrem = state.pos.reduce((a,r)=>a+posPremium(r),0);
+
+  const dkInPlan = state.dk.inPOS ? num(state.dk.amount) : 0;
+  const posFactForKPI = posAmount + dkInPlan;
+  const fzFact = posFactForKPI > 0 ? (posFZAmount + dkInPlan) / posFactForKPI : 0;
+
+  const krhPremiumCount = num(state.products.krhLimit) + num(state.products.krh01);
+  const subsCount = num(state.products.subsAnnual) + num(state.products.subsOther);
+  const productsPremium =
+    num(state.products.krhLimit)*100 +
+    num(state.products.krh01)*100 +
+    num(state.products.startKRH)*500 +
+    num(state.products.subsAnnual)*500 +
+    num(state.products.subsOther)*200 +
+    num(state.products.debitCards)*100 +
+    num(state.products.extraPremium) +
+    num(state.dk.premium);
+
+  const base = posPrem + productsPremium;
+
+  const sPOS = strataDefault(posFactForKPI, num(state.kpi.planPOS));
+  const sFZ = strataFZ(fzFact, num(state.kpi.planFZ));
+  const sCTK = strataDefault(ctkAmount, num(state.kpi.planCTK));
+  const sStart = strataDefault(num(state.products.startKRH), num(state.kpi.planStart));
+  const mainSum = sPOS + sFZ + sCTK + sStart;
+  const mainStrata = aggregateStrata(mainSum);
+
+  let chp = 0;
+  if(num(state.kpi.planKRH)>0) chp += krhPremiumCount >= num(state.kpi.planKRH) ? -1 : 2;
+  if(num(state.kpi.takeRateFact) === 0) chp += -0.5;
+  else if(num(state.kpi.takeRateFact) > 1) chp += 1;
+  if(num(state.kpi.planSubs)>0) chp += subsCount >= num(state.kpi.planSubs) ? -1 : 1;
+  if(num(state.kpi.planPOSPieces)>0 && posPieces < num(state.kpi.planPOSPieces)) chp += 1;
+  if(num(state.kpi.planDebit)>0 && num(state.products.debitCards) < num(state.kpi.planDebit)) chp += 1;
+  if(num(state.kpi.planDK)>0 && num(state.dk.amount) < num(state.kpi.planDK)) chp += 1;
+
+  const finalS = aggregateStrata(mainSum + chp);
+  const coef = coefficient(finalS);
+  const expert = state.kpi.includeExpert && finalS <= 3 ? 20000 : 0;
+  const total = base * coef + expert;
+
+  const add100 =
+    Math.max(num(state.kpi.planPOS)-posFactForKPI,0)*0.035 +
+    Math.max(num(state.kpi.planKRH)-krhPremiumCount,0)*100 +
+    Math.max(num(state.kpi.planStart)-num(state.products.startKRH),0)*500 +
+    Math.max(num(state.kpi.planSubs)-subsCount,0)*300 +
+    Math.max(num(state.kpi.planDebit)-num(state.products.debitCards),0)*100;
+
+  const target = num(state.kpi.targetPercent)/100 || 1;
+  const addTarget =
+    Math.max(num(state.kpi.planPOS)*target-posFactForKPI,0)*0.035 +
+    Math.max(Math.ceil(num(state.kpi.planKRH)*target)-krhPremiumCount,0)*100 +
+    Math.max(Math.ceil(num(state.kpi.planStart)*target)-num(state.products.startKRH),0)*500 +
+    Math.max(Math.ceil(num(state.kpi.planSubs)*target)-subsCount,0)*300 +
+    Math.max(Math.ceil(num(state.kpi.planDebit)*target)-num(state.products.debitCards),0)*100;
+
+  const focus100 = (base + add100) + (state.kpi.includeExpert ? 20000 : 0);
+  const focusTarget = (base + addTarget) + (state.kpi.includeExpert ? 20000 : 0);
+
+  return {
+    posAmount, posPieces, posFZAmount, ctkAmount, posFactForKPI, fzFact,
+    posPrem, productsPremium, base, sPOS, sFZ, sCTK, sStart, mainSum, mainStrata,
+    chp, finalS, coef, expert, total, focus100, focusTarget,
+    krhPremiumCount, subsCount, add100, addTarget
+  };
+}
+
+function readInputs(){
+  state.products.krhLimit = num(document.getElementById("krhLimit").value);
+  state.products.krh01 = num(document.getElementById("krh01").value);
+  state.products.startKRH = num(document.getElementById("startKRH").value);
+  state.products.subsAnnual = num(document.getElementById("subsAnnual").value);
+  state.products.subsOther = num(document.getElementById("subsOther").value);
+  state.products.debitCards = num(document.getElementById("debitCards").value);
+  state.products.extraPremium = num(document.getElementById("extraPremium").value);
+
+  state.dk.amount = num(document.getElementById("dkAmount").value);
+  state.dk.premium = num(document.getElementById("dkPremium").value);
+  state.dk.inPOS = document.getElementById("dkInPOS").checked;
+
+  const k = state.kpi;
+  for(const id of ["planPOS","planPOSPieces","planFZ","planCTK","planStart","planKRH","planSubs","planDebit","planDK","targetPercent","takeRateFact"]){
+    k[id] = num(document.getElementById(id).value);
+  }
+  k.includeExpert = document.getElementById("includeExpert").checked;
+
+  document.querySelectorAll(".pos-card").forEach((card, i)=>{
+    const r = state.pos[i];
+    if(!r) return;
+    r.amount = num(card.querySelector(".pos-amount").value);
+    r.term = num(card.querySelector(".pos-term").value);
+    r.rate = num(card.querySelector(".pos-rate").value);
+    r.fz = card.querySelector(".pos-fz").checked;
+    r.vis = card.querySelector(".pos-vis").checked;
+    r.ctk = card.querySelector(".pos-ctk").checked;
+    r.complex = card.querySelector(".pos-complex").checked;
+  });
+}
+
+function renderPOSList(){
+  const list = document.getElementById("posList");
+  list.innerHTML = "";
+  state.pos.forEach((r,i)=>{
+    const el = document.createElement("div");
+    el.className = "pos-card";
+    el.innerHTML = `
+      <div class="pos-head"><b>POS ${i+1}</b><button class="remove" onclick="removePOS(${i})">Удалить</button></div>
+      <div class="form-grid">
+        <div><label>Сумма, ₽</label><input class="pos-amount" type="number" inputmode="decimal" value="${r.amount}"></div>
+        <div><label>Срок, мес.</label><input class="pos-term" type="number" inputmode="numeric" value="${r.term}"></div>
+        <div class="full"><label>Ставка кредита</label>
+          <select class="pos-rate">
+            ${Object.keys(posRateTable).map(rate=>`<option value="${rate}" ${Number(rate)==Number(r.rate)?"selected":""}>${(Number(rate)*100).toString().replace(".",",")}%</option>`).join("")}
+          </select>
+        </div>
+      </div>
+      <div class="switch-row" style="margin-top:10px">
+        <label class="switch">ФЗ <input class="pos-fz" type="checkbox" ${r.fz?"checked":""}></label>
+        <label class="switch">ВИС <input class="pos-vis" type="checkbox" ${r.vis?"checked":""}></label>
+        <label class="switch">ЦТК <input class="pos-ctk" type="checkbox" ${r.ctk?"checked":""}></label>
+        <label class="switch">POS+КРХ <input class="pos-complex" type="checkbox" ${r.complex?"checked":""}></label>
+      </div>
+      <div class="small" style="margin-top:10px">Премия по строке: <b>${money(posPremium(r))}</b></div>
+    `;
+    list.appendChild(el);
+  });
+  list.querySelectorAll("input,select").forEach(x=>x.addEventListener("input", ()=>{readInputs(); renderSummaryOnly();}));
+}
+
+function addPOS(){
+  readInputs();
+  state.pos.push({amount:0, term:24, rate:0.299, fz:true, vis:true, ctk:true, complex:false});
+  renderAll();
+}
+
+function removePOS(i){
+  readInputs();
+  state.pos.splice(i,1);
+  renderAll();
+}
+
+function renderInputs(){
+  const p = state.products, k=state.kpi, d=state.dk;
+  for(const [id,val] of Object.entries({
+    krhLimit:p.krhLimit, krh01:p.krh01, startKRH:p.startKRH, subsAnnual:p.subsAnnual,
+    subsOther:p.subsOther, debitCards:p.debitCards, extraPremium:p.extraPremium,
+    dkAmount:d.amount, dkPremium:d.premium,
+    planPOS:k.planPOS, planPOSPieces:k.planPOSPieces, planFZ:k.planFZ, planCTK:k.planCTK,
+    planStart:k.planStart, planKRH:k.planKRH, planSubs:k.planSubs, planDebit:k.planDebit,
+    planDK:k.planDK, targetPercent:k.targetPercent, takeRateFact:k.takeRateFact
+  })){
+    const el = document.getElementById(id);
+    if(el) el.value = val;
+  }
+  document.getElementById("dkInPOS").checked = d.inPOS;
+  document.getElementById("includeExpert").checked = k.includeExpert;
+
+  document.querySelectorAll("input,select").forEach(x=>{
+    if(!x.dataset.bound){
+      x.dataset.bound = "1";
+      x.addEventListener("input", ()=>{readInputs(); renderSummaryOnly();});
+      x.addEventListener("change", ()=>{readInputs(); renderSummaryOnly();});
+    }
+  });
+}
+
+function renderProgressItem(title, fact, plan, suffix=""){
+  const ratio = plan>0 ? fact/plan : 0;
+  const cls = ratio>=1 ? "good" : ratio>=.8 ? "warn" : "bad";
+  const showFact = suffix==="₽" ? money(fact) : Math.round(fact).toLocaleString("ru-RU");
+  const showPlan = suffix==="₽" ? money(plan) : Math.round(plan).toLocaleString("ru-RU");
+  return `
+    <div class="progress-item">
+      <div class="progress-top"><span>${title}</span><b>${pct(ratio)}</b></div>
+      <div class="bar"><div class="fill ${cls}" style="width:${Math.min(ratio,1)*100}%"></div></div>
+      <div class="progress-bottom"><span>${showFact}</span><span>цель ${showPlan}</span></div>
+    </div>`;
+}
+
+function recommendations(r){
+  const items = [];
+  const leftPOS = Math.max(state.kpi.planPOS - r.posFactForKPI,0);
+  if(leftPOS>0) items.push(`Добить POS сумму: осталось ${money(leftPOS)} до 100%.`);
+  const leftPOSPieces = Math.max(state.kpi.planPOSPieces - r.posPieces,0);
+  if(leftPOSPieces>0) items.push(`POS в штуках: не хватает ${leftPOSPieces} шт. Это влияет на ЧП.`);
+  const leftKRH = Math.max(state.kpi.planKRH - r.krhPremiumCount,0);
+  if(leftKRH>0) items.push(`КРХ с лимитом / 0.1: не хватает ${leftKRH} карт.`);
+  const leftStart = Math.max(state.kpi.planStart - state.products.startKRH,0);
+  if(leftStart>0) items.push(`Старт КРХ: не хватает ${leftStart} шт.`);
+  const leftSubs = Math.max(state.kpi.planSubs - r.subsCount,0);
+  if(leftSubs>0) items.push(`Подписки: не хватает ${leftSubs} шт.`);
+  const leftDebit = Math.max(state.kpi.planDebit - state.products.debitCards,0);
+  if(leftDebit>0) items.push(`Дебетовые карты: не хватает ${leftDebit} шт.`);
+  const leftDK = Math.max(state.kpi.planDK - state.dk.amount,0);
+  if(leftDK>0) items.push(`ДК сумма: не хватает ${money(leftDK)}. Если по факту 0, ЧП ухудшается.`);
+  if(state.kpi.takeRateFact === 0) items.push(`Take rate сейчас 0: в расчёте это даёт корректировку ЧП −0.5. Проверь фактическое значение.`);
+  if(!items.length) items.push("Основные показатели закрыты. Можно усиливать те продукты, где выше премия за одно действие.");
+  return items;
+}
+
+function renderSummaryOnly(){
+  const r = calc();
+  document.getElementById("totalPremium").textContent = money(r.total);
+  document.getElementById("formulaText").textContent = `${money(r.base)} × ${r.coef.toFixed(2)} + ${money(r.expert)}`;
+  document.getElementById("finalStrata").textContent = r.finalS;
+  document.getElementById("coef").textContent = r.coef.toFixed(2);
+  document.getElementById("expertPremium").textContent = money(r.expert);
+  document.getElementById("focusNow").textContent = money(r.total);
+  document.getElementById("focus100").textContent = money(r.focus100);
+  document.getElementById("focusTarget").textContent = money(r.focusTarget);
+  document.getElementById("posPremium").textContent = money(r.posPrem);
+  document.getElementById("productsPremium").textContent = money(r.productsPremium);
+  document.getElementById("mainStrata").textContent = r.mainStrata;
+  document.getElementById("chpAdj").textContent = r.chp.toFixed(1);
+  const status = document.getElementById("mainStatus");
+  status.textContent = r.finalS <= 3 ? "сильная зона" : r.finalS <= 5 ? "нужно добить" : "риск премии";
+  status.className = "tag " + (r.finalS <= 3 ? "status-good" : r.finalS <= 5 ? "status-warn" : "status-bad");
+
+  document.getElementById("progressList").innerHTML =
+    renderProgressItem("POS сумма", r.posFactForKPI, state.kpi.planPOS, "₽") +
+    renderProgressItem("POS шт.", r.posPieces, state.kpi.planPOSPieces, "шт") +
+    renderProgressItem("КРХ", r.krhPremiumCount, state.kpi.planKRH, "шт") +
+    renderProgressItem("Старт КРХ", state.products.startKRH, state.kpi.planStart, "шт") +
+    renderProgressItem("Подписки", r.subsCount, state.kpi.planSubs, "шт") +
+    renderProgressItem("Дебет", state.products.debitCards, state.kpi.planDebit, "шт") +
+    renderProgressItem("ДК сумма", state.dk.amount, state.kpi.planDK, "₽");
+
+  document.getElementById("recoList").innerHTML = recommendations(r).map((x,i)=>`
+    <div class="recommendation"><div class="dot">${i+1}</div><div>${x}</div></div>
+  `).join("");
+}
+
+function renderAll(){
+  renderPOSList();
+  renderInputs();
+  renderSummaryOnly();
+}
+
+function shareSummary(){
+  readInputs();
+  const r = calc();
+  const text = `Калькулятор премии\nПремия сейчас: ${money(r.total)}\nСтрата: ${r.finalS}\nКоэффициент: ${r.coef.toFixed(2)}\nПри 100%: ${money(r.focus100)}\nЧто добить:\n- ${recommendations(r).join("\n- ")}`;
+  navigator.clipboard?.writeText(text).then(()=>alert("Итог скопирован")).catch(()=>alert(text));
+}
+
+document.querySelectorAll(".tab").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    readInputs();
+    document.querySelectorAll(".tab").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
+    document.getElementById("view-"+btn.dataset.view).classList.add("active");
+    renderSummaryOnly();
+    localStorage.setItem("premiumCalcStateV2", JSON.stringify(state));
+    window.scrollTo({top:0, behavior:"smooth"});
+  });
+});
+
+window.addEventListener("beforeunload", ()=> {
+  try { readInputs(); localStorage.setItem("premiumCalcStateV2", JSON.stringify(state)); } catch(e){}
+});
+
+renderAll();
+</script>
+</body>
+</html>
