@@ -34,7 +34,7 @@ label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}input,se
 </head>
 <body>
 <div class="app">
-<header><div><h1>Калькулятор премии</h1><div class="sub">главная — инфографика, ввод — во вкладках</div></div><div class="pill">v5</div></header>
+<header><div><h1>Калькулятор премии</h1><div class="sub">главная — инфографика, ввод — во вкладках</div></div><div class="pill">v5.1</div></header>
 <main>
 <div id="view-main" class="view active">
   <div class="hero">
@@ -47,6 +47,17 @@ label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}input,se
     <div class="metric"><div class="k">Коэф.</div><div class="v" id="coef">—</div></div>
     <div class="metric"><div class="k">Цель</div><div class="v" id="targetBadge">—</div></div>
   </div>
+  <section>
+    <div class="section-title"><h2>Расчёт страт</h2><span class="small">KPI + ЧП</span></div>
+    <div class="row"><div class="name">POS сумма</div><div class="value" id="strataPOS">—</div></div>
+    <div class="row"><div class="name">ФЗ проникновение</div><div class="value" id="strataFZ">—</div></div>
+    <div class="row"><div class="name">ЦТК сумма</div><div class="value" id="strataCTK">—</div></div>
+    <div class="row"><div class="name">Старт КРХ</div><div class="value" id="strataStart">—</div></div>
+    <div class="row"><div class="name">Основная KPI страта</div><div class="value" id="mainStrata">—</div></div>
+    <div class="row"><div class="name">Корректировка ЧП</div><div class="value" id="chpAdjust">—</div></div>
+    <div class="row"><div class="name">Итоговая страта</div><div class="value" id="finalStrataExplain">—</div></div>
+  </section>
+
   <section>
     <div class="section-title"><h2>Прогноз по цели</h2><span class="tag" id="mainStatus">—</span></div>
     <div class="row"><div class="name">Премия при цели</div><div class="value" id="targetPremium">0 ₽</div></div>
@@ -103,6 +114,10 @@ label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}input,se
   <div><label>ФРОД / мисселинг</label><input id="fraudFact" type="number"></div>
   <div class="full switch"><span>Учитывать Эксперт 20 000 ₽</span><input id="includeExpert" type="checkbox"></div>
 </div>
+</section>
+<section>
+<div class="section-title"><h2>Подробно: почему такая страта</h2><span class="small">расшифровка</span></div>
+<div id="strataDetails"></div>
 </section>
 <section><div class="section-title"><h2>Действия</h2></div><div class="btns"><button onclick="saveData()">Сохранить</button><button class="secondary" onclick="resetData()">Вернуть пример</button><button class="ghost" onclick="copySummary()">Скопировать итог</button></div><p class="footer">Главная ничего не редактирует. Все планы и прогноз меняются только здесь.</p></section>
 </div>
@@ -195,7 +210,7 @@ function calc(){
  const coef=coefficient(finalStrata);
  const expert=k.includeExpert&&finalStrata<=3?20000:0;
  const total=base*coef+expert;
- return{posAmount,posPieces,posPremium,ctkAmount,fzPenetration,productsPremium,dkPremium,dkAmount,dkPieces,posKPIAmount,krh,startKRH,subs,debit,protectionPercent,base,mainStrata,finalStrata,coef,expert,total}
+ return{posAmount,posPieces,posPremium,ctkAmount,fzPenetration,productsPremium,dkPremium,dkAmount,dkPieces,posKPIAmount,krh,startKRH,subs,debit,protectionPercent,base,sPOS,sFZ,sCTK,sStart,mainSum,chp,mainStrata,finalStrata,coef,expert,total}
 }
 
 function targetCalc(r){
@@ -229,10 +244,49 @@ function infoBar(title,fact,plan,suffix){
  return `<div class="infobar"><div class="info-top"><span>${title}</span><b>${pct(ratio)}</b></div><div class="bar"><div class="fill ${cls}" style="width:${Math.min(ratio,1)*100}%"></div></div><div class="info-bottom"><span>${f}</span><span>цель ${p}</span></div></div>`
 }
 
+
+function strataLabel(s){
+  return "страта " + s;
+}
+function chpText(r){
+  const items=[];
+  const k=state.kpi;
+  items.push("КРХ: " + (r.krh>=k.planKRH ? "-1" : "+2"));
+  items.push("Take rate: " + (k.takeRateFact===0 ? "-0.5" : (k.takeRateFact>1 ? "+1" : "0")));
+  items.push("Подписки: " + (r.subs>=k.planSubs ? "-1" : "+1"));
+  items.push("POS шт.: " + (r.posPieces>=k.planPOSPieces ? "-1" : "+1"));
+  items.push("ДК шт.: " + (r.dkPieces>=2 ? "-4" : (r.dkPieces===1 ? "-1" : "+2")));
+  items.push("Защита: " + (r.protectionPercent>=k.planProtection ? "-1" : (r.protectionPercent<80 ? "+2" : "0")));
+  items.push("Дебет: " + (r.debit>=k.planDebit ? "-1" : (r.debit===0 ? "+1" : "0")));
+  return items.join(" · ");
+}
+function renderStrataDetails(r){
+  const k=state.kpi;
+  return `
+    <div class="row"><div class="name">POS сумма<br><span class="small">${money(r.posKPIAmount)} / ${money(k.planPOS)}</span></div><div class="value">страта ${r.sPOS}</div></div>
+    <div class="row"><div class="name">ФЗ проникновение<br><span class="small">${pct(r.fzPenetration)} / ${pct(k.planFZ)}</span></div><div class="value">страта ${r.sFZ}</div></div>
+    <div class="row"><div class="name">ЦТК сумма<br><span class="small">${money(r.ctkAmount)} / ${money(k.planCTK)}</span></div><div class="value">страта ${r.sCTK}</div></div>
+    <div class="row"><div class="name">Старт КРХ<br><span class="small">${r.startKRH} / ${k.planStart}</span></div><div class="value">страта ${r.sStart}</div></div>
+    <div class="row"><div class="name">Сумма страт KPI</div><div class="value">${r.mainSum}</div></div>
+    <div class="row"><div class="name">Основная KPI страта</div><div class="value">${r.mainStrata}</div></div>
+    <div class="row"><div class="name">Корректировка ЧП<br><span class="small">${chpText(r)}</span></div><div class="value">${r.chp.toFixed(1)}</div></div>
+    <div class="row"><div class="name">Итоговая страта после ЧП</div><div class="value">${r.finalStrata}</div></div>
+    <div class="row"><div class="name">Коэффициент премии</div><div class="value">${r.coef.toFixed(2)}</div></div>
+  `;
+}
+
 function renderMain(){
  const r=calc(), t=targetCalc(r), k=state.kpi;
  setText("totalPremium",money(r.total));setText("formulaText",`${money(r.base)} × ${r.coef.toFixed(2)} + ${money(r.expert)}`);
  setText("finalStrata",r.finalStrata);setText("coef",r.coef.toFixed(2));setText("targetBadge",k.targetPercent+"%");
+ setText("strataPOS", strataLabel(r.sPOS));
+ setText("strataFZ", strataLabel(r.sFZ));
+ setText("strataCTK", strataLabel(r.sCTK));
+ setText("strataStart", strataLabel(r.sStart));
+ setText("mainStrata", r.mainStrata);
+ setText("chpAdjust", r.chp.toFixed(1));
+ setText("finalStrataExplain", r.finalStrata + " → коэф. " + r.coef.toFixed(2));
+ setHTML("strataDetails", renderStrataDetails(r));
  setText("targetPremium",money(t.total));setText("targetDelta",(t.delta>=0?"+":"")+money(t.delta));setClass("targetDelta","value "+(t.delta>=0?"ok":"bad"));
  setText("mainStatus",r.finalStrata<=3?"сильная зона":r.finalStrata<=5?"нужно добить":"риск премии");setClass("mainStatus","tag "+(r.finalStrata<=3?"ok":r.finalStrata<=5?"warn":"bad"));
  const parts=[]; if(t.need.posAmount>0)parts.push(`POS сумма: +${money(t.need.posAmount)}`); if(t.need.posPieces>0)parts.push(`POS шт.: +${t.need.posPieces}`); if(t.need.krh>0)parts.push(`КРХ: +${t.need.krh}`); if(t.need.startKRH>0)parts.push(`Старт КРХ: +${t.need.startKRH}`); if(t.need.subs>0)parts.push(`Подписки: +${t.need.subs}`); if(t.need.debit>0)parts.push(`Дебет: +${t.need.debit}`); if(t.need.dkPieces>0)parts.push(`ДК: +${t.need.dkPieces}`);
