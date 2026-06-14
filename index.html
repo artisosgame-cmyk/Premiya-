@@ -37,13 +37,58 @@ label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}input,se
 </head>
 <body>
 <div class="app">
-<header><div><h1>Калькулятор премии</h1><div class="sub">принцип Excel: одна строка = один кредит / продукт</div></div><div class="pill">v3</div></header>
+<header><div><h1>Калькулятор премии</h1><div class="sub">принцип Excel: одна строка = один кредит / продукт</div></div><div class="pill">v3.2</div></header>
 
 <main>
 <div id="view-main" class="view active">
   <div class="hero"><div class="label">Полная фактическая премия</div><div class="money" id="totalPremium">0 ₽</div><div class="note" id="formulaText">База × коэффициент + Эксперт</div></div>
   <div class="grid3"><div class="metric"><div class="k">Страта</div><div class="v" id="finalStrata">—</div></div><div class="metric"><div class="k">Коэф.</div><div class="v" id="coef">—</div></div><div class="metric"><div class="k">Эксперт</div><div class="v" id="expertPremium">—</div></div></div>
   <section><div class="section-title"><h2>Итоги по блокам</h2><span class="tag" id="mainStatus">—</span></div><div class="row"><div class="name">POS премия</div><div class="value" id="sumPOSPremium">0 ₽</div></div><div class="row"><div class="name">Продукты</div><div class="value" id="sumProductsPremium">0 ₽</div></div><div class="row"><div class="name">ДК</div><div class="value" id="sumDKPremium">0 ₽</div></div><div class="row"><div class="name">База до коэффициента</div><div class="value" id="basePremium">0 ₽</div></div></section>
+  <section>
+    <div class="section-title"><h2>Прогноз премии</h2><span class="small">100% / 110% / 120%</span></div>
+    <div class="row"><div class="name">Премия сейчас</div><div class="value" id="forecastNow">0 ₽</div></div>
+    <div class="row"><div class="name">Если закрыть 100%</div><div class="value" id="forecast100">0 ₽</div></div>
+    <div class="row"><div class="name">Если закрыть 110%</div><div class="value" id="forecast110">0 ₽</div></div>
+    <div class="row"><div class="name">Если закрыть 120%</div><div class="value" id="forecast120">0 ₽</div></div>
+    <div class="calc-line" id="forecastComment">Расчёт появится после заполнения показателей.</div>
+  </section>
+  <section>
+    <div class="section-title"><h2>Мой сценарий</h2><span class="small">ручной расчёт</span></div>
+    <div class="hint" style="margin-bottom:12px">Выбери процент или введи свои значения. Все расчёты берутся из текущих POS, продуктов, ДК и планов.</div>
+    <div class="form-grid">
+      <div>
+        <label>Режим</label>
+        <select id="scenarioMode">
+          <option value="percent">По проценту</option>
+          <option value="manual">Вручную</option>
+        </select>
+      </div>
+      <div>
+        <label>Цель, %</label>
+        <input id="scenarioPercent" type="number" value="100" min="0" step="1">
+      </div>
+      <div><label>POS сумма, ₽</label><input id="scenarioPOSAmount" type="number"></div>
+      <div><label>POS шт.</label><input id="scenarioPOSPieces" type="number"></div>
+      <div><label>КРХ</label><input id="scenarioKRH" type="number"></div>
+      <div><label>Старт КРХ</label><input id="scenarioStartKRH" type="number"></div>
+      <div><label>Подписки</label><input id="scenarioSubs" type="number"></div>
+      <div><label>Дебет</label><input id="scenarioDebit" type="number"></div>
+      <div><label>ДК шт.</label><input id="scenarioDKPieces" type="number"></div>
+      <div><label>Защита в ДК, %</label><input id="scenarioProtectionPercent" type="number" step="1"></div>
+      <div class="full"><label>Доп. премия вручную, ₽</label><input id="scenarioExtraPremium" type="number" value="0"></div>
+    </div>
+    <div class="row"><div class="name">Премия по сценарию</div><div class="value" id="scenarioPremium">0 ₽</div></div>
+    <div class="row"><div class="name">Разница к текущей</div><div class="value" id="scenarioDelta">0 ₽</div></div>
+    <div class="calc-line" id="scenarioComment">Заполни сценарий.</div>
+  </section>
+
+  <section>
+    <div class="section-title"><h2>Планы месяца</h2><span class="small">главные цели</span></div>
+    <div class="row"><div class="name">POS сумма / шт.</div><div class="value" id="planMainPOS">—</div></div>
+    <div class="row"><div class="name">КРХ / Старт КРХ</div><div class="value" id="planMainKRH">—</div></div>
+    <div class="row"><div class="name">Подписки / Дебет</div><div class="value" id="planMainProducts">—</div></div>
+    <div class="row"><div class="name">ДК / Защита</div><div class="value" id="planMainDK">—</div></div>
+  </section>
   <section><div class="section-title"><h2>Выполнение</h2><span class="small">факт / план</span></div><div id="progressList"></div></section>
 </div>
 
@@ -121,6 +166,19 @@ const defaultState = {
     planKRH:9, planSubs:7, planDKPieces:2, planProtection:0.9, planDeposits:2,
     planDebit:3, planDKAmount:400000, takeRateFact:0, csiFact:0, fraudFact:0,
     targetPercent:120, includeExpert:true
+  },
+  scenario:{
+    mode:"percent",
+    percent:100,
+    posAmount:550000,
+    posPieces:7,
+    krh:9,
+    startKRH:7,
+    subs:7,
+    debit:3,
+    dkPieces:2,
+    protectionPercent:90,
+    extraPremium:0
   }
 };
 
@@ -131,7 +189,10 @@ function loadData(){
     const raw = localStorage.getItem(STORAGE_KEY);
     if(raw) {
       const saved = JSON.parse(raw);
-      if(saved && saved.pos && saved.products && saved.kpi) return saved;
+      if(saved && saved.pos && saved.products && saved.kpi) {
+        if(!saved.scenario) saved.scenario = JSON.parse(JSON.stringify(defaultState.scenario));
+        return saved;
+      }
     }
   } catch(e) {}
   return JSON.parse(JSON.stringify(defaultState));
@@ -346,6 +407,240 @@ function recommendations(r){
   if(!items.length) items.push("Основные показатели закрыты.");
   return items;
 }
+
+
+function ensureScenarioDefaults(){
+  if(!state.scenario) state.scenario = JSON.parse(JSON.stringify(defaultState.scenario));
+  const r = calc();
+  const s = state.scenario;
+  if(!s.posAmount) s.posAmount = state.kpi.planPOS;
+  if(!s.posPieces) s.posPieces = state.kpi.planPOSPieces;
+  if(!s.krh) s.krh = state.kpi.planKRH;
+  if(!s.startKRH) s.startKRH = state.kpi.planStart;
+  if(!s.subs) s.subs = state.kpi.planSubs;
+  if(!s.debit) s.debit = state.kpi.planDebit;
+  if(!s.dkPieces) s.dkPieces = state.kpi.planDKPieces;
+  if(!s.protectionPercent) s.protectionPercent = Math.round(state.kpi.planProtection*100);
+}
+
+function readScenario(){
+  ensureScenarioDefaults();
+  const ids = {
+    scenarioMode:"mode",
+    scenarioPercent:"percent",
+    scenarioPOSAmount:"posAmount",
+    scenarioPOSPieces:"posPieces",
+    scenarioKRH:"krh",
+    scenarioStartKRH:"startKRH",
+    scenarioSubs:"subs",
+    scenarioDebit:"debit",
+    scenarioDKPieces:"dkPieces",
+    scenarioProtectionPercent:"protectionPercent",
+    scenarioExtraPremium:"extraPremium"
+  };
+  Object.entries(ids).forEach(([id,key])=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    if(key === "mode") state.scenario[key] = el.value;
+    else state.scenario[key] = num(el.value);
+  });
+}
+
+function fillScenarioFromPercent(){
+  ensureScenarioDefaults();
+  const s = state.scenario;
+  const k = state.kpi;
+  const m = num(s.percent)/100 || 1;
+  s.posAmount = Math.round(num(k.planPOS) * m);
+  s.posPieces = Math.ceil(num(k.planPOSPieces) * m);
+  s.krh = Math.ceil(num(k.planKRH) * m);
+  s.startKRH = Math.ceil(num(k.planStart) * m);
+  s.subs = Math.ceil(num(k.planSubs) * m);
+  s.debit = Math.ceil(num(k.planDebit) * m);
+  s.dkPieces = Math.ceil(num(k.planDKPieces) * m);
+  s.protectionPercent = Math.round(num(k.planProtection) * 100);
+}
+
+function renderScenarioInputs(){
+  ensureScenarioDefaults();
+  const s = state.scenario;
+  const map = {
+    scenarioMode:s.mode,
+    scenarioPercent:s.percent,
+    scenarioPOSAmount:s.posAmount,
+    scenarioPOSPieces:s.posPieces,
+    scenarioKRH:s.krh,
+    scenarioStartKRH:s.startKRH,
+    scenarioSubs:s.subs,
+    scenarioDebit:s.debit,
+    scenarioDKPieces:s.dkPieces,
+    scenarioProtectionPercent:s.protectionPercent,
+    scenarioExtraPremium:s.extraPremium
+  };
+  Object.entries(map).forEach(([id,v])=>set(id,v));
+
+  document.querySelectorAll("#scenarioMode,#scenarioPercent,#scenarioPOSAmount,#scenarioPOSPieces,#scenarioKRH,#scenarioStartKRH,#scenarioSubs,#scenarioDebit,#scenarioDKPieces,#scenarioProtectionPercent,#scenarioExtraPremium").forEach(el=>{
+    if(!el.dataset.scenarioBound){
+      el.dataset.scenarioBound="1";
+      el.addEventListener("input", ()=>{
+        readScenario();
+        if(state.scenario.mode === "percent" && el.id === "scenarioPercent") fillScenarioFromPercent();
+        saveSilent();
+        renderAll();
+      });
+      el.addEventListener("change", ()=>{
+        readScenario();
+        if(state.scenario.mode === "percent") fillScenarioFromPercent();
+        saveSilent();
+        renderAll();
+      });
+    }
+  });
+
+  const manual = s.mode === "manual";
+  ["scenarioPOSAmount","scenarioPOSPieces","scenarioKRH","scenarioStartKRH","scenarioSubs","scenarioDebit","scenarioDKPieces","scenarioProtectionPercent"].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.disabled = !manual;
+  });
+}
+
+function scenarioCalc(){
+  ensureScenarioDefaults();
+  if(state.scenario.mode === "percent") fillScenarioFromPercent();
+
+  const r = calc();
+  const s = state.scenario;
+
+  const addPOSAmount = Math.max(num(s.posAmount) - r.posKPIAmount, 0);
+  const addPOSPieces = Math.max(num(s.posPieces) - r.posPieces, 0);
+  const addKRH = Math.max(num(s.krh) - r.krh, 0);
+  const addStart = Math.max(num(s.startKRH) - r.startKRH, 0);
+  const addSubs = Math.max(num(s.subs) - r.subs, 0);
+  const addDebit = Math.max(num(s.debit) - r.debit, 0);
+  const addDKPieces = Math.max(num(s.dkPieces) - r.dkPieces, 0);
+
+  // Связанный прогноз по всем блокам:
+  // POS добавка по средней премии 3,5% от недостающей суммы.
+  // Если нужна точность по каждой будущей POS-заявке, её лучше добавить во вкладке POS как отдельную строку.
+  const addPremium =
+    addPOSAmount * 0.035 +
+    addKRH * 100 +
+    addStart * 500 +
+    addSubs * 300 +
+    addDebit * 100 +
+    addDKPieces * 1500 +
+    num(s.extraPremium);
+
+  const scenarioBase = r.base + addPremium;
+
+  // Страта сценария считается от сценарных значений, а не отдельно от главной.
+  const k = state.kpi;
+  const sPOS = strataDefault(num(s.posAmount), num(k.planPOS));
+  const sFZ = r.sFZ; // ФЗ берём из текущего факта, чтобы не создавать расхождений без отдельного поля ФЗ.
+  const sCTK = r.sCTK; // ЦТК берём из текущего факта, потому что сценарий меняет только основные вводимые блоки.
+  const sStartStrata = strataDefault(num(s.startKRH), num(k.planStart));
+  const mainSum = sPOS + sFZ + sCTK + sStartStrata;
+
+  let chp = 0;
+  chp += num(s.krh) >= num(k.planKRH) ? -1 : 2;
+  if(num(k.takeRateFact)===0) chp += -0.5; else if(num(k.takeRateFact)>1) chp += 1;
+  chp += num(s.subs) >= num(k.planSubs) ? -1 : 1;
+  chp += num(s.posPieces) >= num(k.planPOSPieces) ? -1 : 1;
+  chp += num(s.dkPieces) >= 2 ? -4 : (num(s.dkPieces)===1 ? -1 : 2);
+  const protectionRatio = num(s.protectionPercent)/100;
+  chp += protectionRatio >= num(k.planProtection) ? -1 : (protectionRatio < 0.8 ? 2 : 0);
+  chp += num(s.debit) >= 3 ? -1 : (num(s.debit)===0 ? 1 : 0);
+  chp += num(k.fraudFact)*0.5;
+  if(num(k.csiFact)) chp += num(k.csiFact)>=4.67 ? -0.5 : (num(k.csiFact)<4 ? 0.5 : 0);
+
+  const finalStrata = aggregateStrata(mainSum + chp);
+  const coef = coefficient(finalStrata);
+  const expert = state.kpi.includeExpert && finalStrata <= 3 ? 20000 : 0;
+  const total = scenarioBase * coef + expert;
+
+  return {
+    total,
+    delta: total - r.total,
+    finalStrata,
+    coef,
+    addPremium,
+    addPOSAmount,
+    addPOSPieces,
+    addKRH,
+    addStart,
+    addSubs,
+    addDebit,
+    addDKPieces,
+    protectionRatio
+  };
+}
+
+function scenarioText(sc){
+  const parts=[];
+  if(sc.addPOSAmount>0) parts.push("POS сумма +" + money(sc.addPOSAmount));
+  if(sc.addPOSPieces>0) parts.push("POS шт. +" + sc.addPOSPieces);
+  if(sc.addKRH>0) parts.push("КРХ +" + sc.addKRH);
+  if(sc.addStart>0) parts.push("Старт КРХ +" + sc.addStart);
+  if(sc.addSubs>0) parts.push("Подписки +" + sc.addSubs);
+  if(sc.addDebit>0) parts.push("Дебет +" + sc.addDebit);
+  if(sc.addDKPieces>0) parts.push("ДК +" + sc.addDKPieces);
+  const base = "Страта сценария: " + sc.finalStrata + " · коэффициент " + sc.coef.toFixed(2) + ". ";
+  if(!parts.length) return base + "Сценарий уже не требует добавок к текущему факту.";
+  return base + "Нужно добавить: " + parts.join(" · ");
+}
+
+function forecastPremium(target){
+  const r = calc();
+  const k = state.kpi;
+  const multiplier = target || 1;
+
+  const posNeedAmount = Math.max(k.planPOS * multiplier - r.posKPIAmount, 0);
+  const posNeedPieces = Math.max(Math.ceil(k.planPOSPieces * multiplier) - r.posPieces, 0);
+  const krhNeed = Math.max(Math.ceil(k.planKRH * multiplier) - r.krh, 0);
+  const startNeed = Math.max(Math.ceil(k.planStart * multiplier) - r.startKRH, 0);
+  const subsNeed = Math.max(Math.ceil(k.planSubs * multiplier) - r.subs, 0);
+  const debitNeed = Math.max(Math.ceil(k.planDebit * multiplier) - r.debit, 0);
+  const dkNeedPieces = Math.max(Math.ceil(k.planDKPieces * multiplier) - r.dkPieces, 0);
+
+  const addPremium =
+    posNeedAmount * 0.035 +
+    krhNeed * 100 +
+    startNeed * 500 +
+    subsNeed * 300 +
+    debitNeed * 100 +
+    dkNeedPieces * 1500;
+
+  const scenarioBase = r.base + addPremium;
+  const scenarioCoef = target >= 1.2 ? 1.15 : (target >= 1.1 ? 1.05 : 1.00);
+  const scenarioExpert = state.kpi.includeExpert ? 20000 : 0;
+  const scenarioTotal = scenarioBase * scenarioCoef + scenarioExpert;
+
+  return {
+    total: scenarioTotal,
+    addPremium,
+    posNeedAmount,
+    posNeedPieces,
+    krhNeed,
+    startNeed,
+    subsNeed,
+    debitNeed,
+    dkNeedPieces
+  };
+}
+
+function forecastText(f100){
+  const parts = [];
+  if(f100.posNeedAmount > 0) parts.push("POS сумма: +" + money(f100.posNeedAmount));
+  if(f100.posNeedPieces > 0) parts.push("POS шт.: +" + f100.posNeedPieces);
+  if(f100.krhNeed > 0) parts.push("КРХ: +" + f100.krhNeed);
+  if(f100.startNeed > 0) parts.push("Старт КРХ: +" + f100.startNeed);
+  if(f100.subsNeed > 0) parts.push("Подписки: +" + f100.subsNeed);
+  if(f100.debitNeed > 0) parts.push("Дебет: +" + f100.debitNeed);
+  if(f100.dkNeedPieces > 0) parts.push("ДК: +" + f100.dkNeedPieces);
+  if(!parts.length) return "По основным показателям 100% уже закрыт. Можно работать на 110–120%.";
+  return "До 100%: " + parts.join(" · ");
+}
+
 function renderSummary(){
   const r=calc();
   document.getElementById("totalPremium").textContent=money(r.total);
@@ -357,6 +652,29 @@ function renderSummary(){
   document.getElementById("sumProductsPremium").textContent=money(r.productsPremium);
   document.getElementById("sumDKPremium").textContent=money(r.dkPremium);
   document.getElementById("basePremium").textContent=money(r.base);
+
+  renderScenarioInputs();
+  const sc = scenarioCalc();
+  document.getElementById("scenarioPremium").textContent = money(sc.total);
+  document.getElementById("scenarioDelta").textContent = (sc.delta>=0 ? "+" : "") + money(sc.delta);
+  document.getElementById("scenarioDelta").className = "value " + (sc.delta>=0 ? "ok" : "bad");
+  document.getElementById("scenarioComment").textContent = scenarioText(sc);
+
+
+  const f100 = forecastPremium(1.0);
+  const f110 = forecastPremium(1.1);
+  const f120 = forecastPremium(1.2);
+
+  document.getElementById("forecastNow").textContent = money(r.total);
+  document.getElementById("forecast100").textContent = money(f100.total);
+  document.getElementById("forecast110").textContent = money(f110.total);
+  document.getElementById("forecast120").textContent = money(f120.total);
+  document.getElementById("forecastComment").textContent = forecastText(f100);
+
+  document.getElementById("planMainPOS").textContent = money(state.kpi.planPOS) + " / " + state.kpi.planPOSPieces + " шт.";
+  document.getElementById("planMainKRH").textContent = state.kpi.planKRH + " / " + state.kpi.planStart;
+  document.getElementById("planMainProducts").textContent = state.kpi.planSubs + " / " + state.kpi.planDebit;
+  document.getElementById("planMainDK").textContent = state.kpi.planDKPieces + " шт. / " + Math.round(state.kpi.planProtection*100) + "%";
   document.getElementById("mainStatus").textContent=r.finalStrata<=3?"сильная зона":r.finalStrata<=5?"нужно добить":"риск премии";
   document.getElementById("mainStatus").className="tag "+(r.finalStrata<=3?"ok":r.finalStrata<=5?"warn":"bad");
   document.getElementById("progressList").innerHTML =
