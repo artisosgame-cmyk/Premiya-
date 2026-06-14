@@ -34,7 +34,7 @@ label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}input,se
 </head>
 <body>
 <div class="app">
-<header><div><h1>Калькулятор премии</h1><div class="sub">главная — инфографика, ввод — во вкладках</div></div><div class="pill">v5.5</div></header>
+<header><div><h1>Калькулятор премии</h1><div class="sub">главная — инфографика, ввод — во вкладках</div></div><div class="pill">v5.6</div></header>
 <main>
 <div id="view-main" class="view active">
   <div class="hero">
@@ -65,6 +65,7 @@ label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}input,se
     <div class="section-title"><h2>Прогноз по цели</h2><span class="tag" id="mainStatus">—</span></div>
     <div class="row"><div class="name">Премия при цели</div><div class="value" id="targetPremium">0 ₽</div></div>
     <div class="row"><div class="name">Добавка к текущей</div><div class="value" id="targetDelta">0 ₽</div></div>
+    <div class="row"><div class="name">Эксперт в прогнозе</div><div class="value" id="targetExpert">0 ₽</div></div>
     <div class="calc-line" id="targetComment">Цель меняется во вкладке “Планы”.</div>
   </section>
 
@@ -262,8 +263,29 @@ function targetCalc(r){
  // без ДК, вкладов, пакетов, мультиполиса и без пересчёта коэффициента/Эксперта.
  const addPremium=need.posAmount*avgPOSRate+need.krh*100+need.startKRH*500+need.subs*500+need.debit*100;
 
- const total=r.total+addPremium;
- return{target:t,need,addPremium,total,delta:addPremium};
+ // Считаем страту по прогнозу только для условия Эксперта.
+ // Саму примерную добавку не умножаем на новый коэффициент, чтобы она оставалась ориентиром как в Excel.
+ const sPOS=strataDefault(t.posAmount,k.planPOS);
+ const sFZ=strataFZ(r.fzPenetration,k.planFZ);
+ const sCTK=strataDefault(t.ctkAmount,k.planCTK);
+ const sStart=strataDefault(t.startKRH,k.planStart);
+ let chp=0;
+ chp+=t.krh>=k.planKRH?-1:2;
+ if(k.takeRateFact===0)chp+=-0.5;else if(k.takeRateFact>1)chp+=1;
+ chp+=t.subs>=k.planSubs?-1:1;
+ chp+=t.posPieces>=k.planPOSPieces?-1:1;
+ chp+=t.dkPieces>=2?-4:(t.dkPieces===1?-1:2);
+ chp+=t.protection>=k.planProtection?-1:(t.protection<80?2:0);
+ chp+=t.debit>=k.planDebit?-1:(t.debit===0?1:0);
+ chp+=num(k.fraudFact)*0.5;
+ if(num(k.csiFact))chp+=num(k.csiFact)>=4.67?-0.5:(num(k.csiFact)<4?0.5:0);
+ const targetFinalStrata=aggregateStrata(sPOS+sFZ+sCTK+sStart+chp);
+
+ const targetExpert=k.includeExpert&&targetFinalStrata<=3?20000:0;
+ const expertDelta=targetExpert-r.expert;
+
+ const total=r.total+addPremium+expertDelta;
+ return{target:t,need,addPremium,targetFinalStrata,targetExpert,expertDelta,total,delta:addPremium+expertDelta};
 }
 
 function infoBar(title,fact,plan,suffix){
@@ -416,6 +438,7 @@ function renderMain(){
  setText("targetPremium",money(t.total));
  setText("targetDelta",(t.delta>=0?"+":"")+money(t.delta));
  setClass("targetDelta","value "+(t.delta>=0?"ok":"bad"));
+ setText("targetExpert", state.kpi.includeExpert ? money(t.targetExpert||0) : "выключен");
  setText("mainStatus",r.finalStrata<=3?"сильная зона":r.finalStrata<=5?"нужно добить":"риск премии");
  setClass("mainStatus","tag "+(r.finalStrata<=3?"ok":r.finalStrata<=5?"warn":"bad"));
  const parts=[];
@@ -428,7 +451,8 @@ function renderMain(){
  if(t.need.debit>0) parts.push(`Дебет: +${t.need.debit}`);
  if(t.need.dkPieces>0) parts.push(`ДК: +${t.need.dkPieces}`);
  if(r.fzPenetration<k.planFZ) parts.push(`ФЗ: до нормы ${pct(k.planFZ-r.fzPenetration)}`);
- setText("targetComment", parts.length ? `До цели ${k.targetPercent}% осталось: `+parts.join(" · ") : `Цель ${k.targetPercent}% по основным блокам уже закрыта.`);
+ const expertNote = k.includeExpert ? `Эксперт: ${money(t.targetExpert||0)} при прогнозной страте ${t.targetFinalStrata||r.finalStrata}.` : "Эксперт выключен.";
+ setText("targetComment", parts.length ? `До цели ${k.targetPercent}% осталось: `+parts.join(" · ")+`. ${expertNote}` : `Цель ${k.targetPercent}% по основным блокам уже закрыта. ${expertNote}`);
  setHTML("approxAddTable", renderApproxAddTable(r,t));
  setHTML("needList", parts.length ? parts.map((x,i)=>`<div class="reco"><div class="dot">${i+1}</div><div>${x}</div></div>`).join("") : `<div class="hint">По текущим значениям цель закрыта. Можно поднять цель прогноза во вкладке “Планы”.</div>`);
  setText("sumPOSPremium",money(r.posPremium));
@@ -455,7 +479,7 @@ function removeDK(i){state.dk.splice(i,1);saveSilent();renderAll()}
 function readKPI(){["targetPercent","planPOS","planPOSPieces","planFZ","planCTK","planStart","planKRH","planSubs","planDKPieces","planProtection","planDebit","planDKAmount","takeRateFact","csiFact","fraudFact"].forEach(id=>state.kpi[id]=val(id));state.kpi.includeExpert=val("includeExpert")}
 function renderKPI(){Object.entries(state.kpi).forEach(([k,v])=>set(k,v));document.querySelectorAll("#view-kpi input, #view-kpi select").forEach(e=>{if(!e.dataset.bound){e.dataset.bound="1";e.addEventListener("input",()=>{readKPI();saveSilent();renderAll()});e.addEventListener("change",()=>{readKPI();saveSilent();renderAll()})}})}
 function renderAll(){renderPOS();renderProducts();renderDK();renderKPI();renderMain()}
-function copySummary(){const r=calc(),t=targetCalc(r);const txt=`Премия сейчас: ${money(r.total)}\nЦель: ${state.kpi.targetPercent}%\nПремия при цели: ${money(t.total)}\nРазница: ${money(t.delta)}`;navigator.clipboard?.writeText(txt).then(()=>alert("Итог скопирован")).catch(()=>alert(txt))}
+function copySummary(){const r=calc(),t=targetCalc(r);const txt=`Премия сейчас: ${money(r.total)}\nЦель: ${state.kpi.targetPercent}%\nПремия при цели: ${money(t.total)}\nДобавка: ${money(t.delta)}\nЭксперт в прогнозе: ${state.kpi.includeExpert?money(t.targetExpert||0):"выключен"}`;navigator.clipboard?.writeText(txt).then(()=>alert("Итог скопирован")).catch(()=>alert(txt))}
 document.querySelectorAll(".tab").forEach(btn=>btn.addEventListener("click",()=>{readKPI();document.querySelectorAll(".tab").forEach(b=>b.classList.remove("active"));btn.classList.add("active");document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));document.getElementById("view-"+btn.dataset.view).classList.add("active");saveSilent();renderMain();scrollTo({top:0,behavior:"smooth"})}));
 window.addEventListener("beforeunload",()=>{try{readKPI();saveSilent()}catch(e){}});
 renderAll();
