@@ -45,7 +45,7 @@ details.add-details[open] summary:after{content:"↑"}
 </head>
 <body>
 <div class="app">
-<header><div><h1>Калькулятор премии</h1><div class="sub">главная — инфографика, ввод — во вкладках</div></div><div class="pill">v5.9</div></header>
+<header><div><h1>Калькулятор премии</h1><div class="sub">главная — инфографика, ввод — во вкладках</div></div><div class="pill">v5.10</div></header>
 <main>
 <div id="view-main" class="view active">
   <div class="hero">
@@ -84,7 +84,7 @@ details.add-details[open] summary:after{content:"↑"}
   <section>
     <div class="section-title"><h2>Примерная добавка</h2><span class="small">кратко</span></div>
     <div id="approxAddTable"></div>
-    <div class="calc-line">Ориентир без ДК, вкладов, пакетов и мультиполиса. Коэффициент страты и Эксперт сюда не входят.</div>
+    <div class="calc-line">Примечание: без ДК, вкладов, пакетов и мультиполиса. Коэффициент страты и Эксперт не входят.</div>
   </section>
 
   <section>
@@ -399,7 +399,6 @@ function renderApproxAddTable(r,t){
       <div class="box"><span>До 100%</span><b>${money(total100)}</b></div>
       <div class="box"><span>До цели ${k.targetPercent}%</span><b>${money(totalTarget)}</b></div>
     </div>
-    <div class="calc-line">Ориентир без ДК, вкладов, пакетов и мультиполиса.</div>
     <details class="add-details">
       <summary>Показать расчёт</summary>
       <div style="padding:0 14px 8px">${details}</div>
