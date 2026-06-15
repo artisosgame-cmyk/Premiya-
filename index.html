@@ -27,6 +27,17 @@ label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}input,se
 .calc-line{font-size:12px;color:var(--muted);line-height:1.35;margin-top:10px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px}.calc-line b{color:var(--text)}
 .infobar{padding:11px 0;border-top:1px solid var(--line)}.infobar:first-child{border-top:0}.info-top,.info-bottom{display:flex;justify-content:space-between;gap:8px}.info-top{font-size:14px}.info-top b{font-size:14px}.info-bottom{font-size:12px;color:var(--muted)}.bar{height:9px;background:#eee7da;border-radius:99px;overflow:hidden;margin:9px 0 3px}.fill{height:100%;border-radius:99px;background:var(--dark)}.fill.good{background:var(--good)}.fill.warn{background:var(--warn)}.fill.bad{background:var(--bad)}
 .product-table{display:grid;gap:9px}.prod-row{display:grid;grid-template-columns:1fr 80px 92px;gap:8px;align-items:center;background:#fbfaf7;border:1px solid var(--line);border-radius:16px;padding:10px}.prod-title{font-size:13px;font-weight:750;line-height:1.2}.prod-sub{font-size:11px;color:var(--muted);margin-top:3px}.prod-premium{font-size:13px;font-weight:800;text-align:right}.group-title{font-size:13px;color:var(--muted);font-weight:850;margin:16px 0 7px}
+
+details.add-details{margin-top:12px;border:1px solid var(--line);border-radius:18px;background:#fbfaf7;overflow:hidden}
+details.add-details summary{list-style:none;padding:13px 14px;font-weight:800;cursor:pointer;color:#2b2823}
+details.add-details summary::-webkit-details-marker{display:none}
+details.add-details summary:after{content:"↓";float:right;color:var(--muted)}
+details.add-details[open] summary:after{content:"↑"}
+.compact-total{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.compact-total .box{background:#fbfaf7;border:1px solid var(--line);border-radius:18px;padding:13px}
+.compact-total .box span{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}
+.compact-total .box b{font-size:20px}
+
 .reco{display:flex;gap:10px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--line)}.reco:first-child{border-top:0}.dot{width:22px;height:22px;min-width:22px;border-radius:50%;background:#efe2c0;color:#6b4e07;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:850}.footer{font-size:12px;color:var(--muted);line-height:1.45;text-align:center;margin:18px 7px}
 .ok{color:var(--good)}.warn{color:var(--warn)}.bad{color:var(--bad)}
 @media(max-width:390px){.money{font-size:36px}.metric .v{font-size:17px}.prod-row{grid-template-columns:1fr 70px 82px}}
@@ -34,7 +45,7 @@ label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}input,se
 </head>
 <body>
 <div class="app">
-<header><div><h1>Калькулятор премии</h1><div class="sub">главная — инфографика, ввод — во вкладках</div></div><div class="pill">v5.7</div></header>
+<header><div><h1>Калькулятор премии</h1><div class="sub">главная — инфографика, ввод — во вкладках</div></div><div class="pill">v5.9</div></header>
 <main>
 <div id="view-main" class="view active">
   <div class="hero">
@@ -62,16 +73,16 @@ label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}input,se
   </section>
 
   <section>
-    <div class="section-title"><h2>Прогноз по цели</h2><span class="tag" id="mainStatus">—</span></div>
-    <div class="row"><div class="name">Премия при цели</div><div class="value" id="targetPremium">0 ₽</div></div>
-    <div class="row"><div class="name">Добавка по продажам</div><div class="value" id="salesAdd">0 ₽</div></div>
-    <div class="row"><div class="name">Эксперт</div><div class="value" id="targetExpert">0 ₽</div></div>
-    <div class="row"><div class="name">Итого прибавка</div><div class="value" id="targetDelta">0 ₽</div></div>
-    <div class="calc-line" id="targetComment">Цель меняется во вкладке “Планы”.</div>
+    <div class="section-title"><h2>Примерный прогноз</h2><span class="tag" id="mainStatus">—</span></div>
+    <div class="row"><div class="name">Сейчас</div><div class="value" id="forecastNowMini">0 ₽</div></div>
+    <div class="row"><div class="name">+ продажи</div><div class="value" id="salesAdd">0 ₽</div></div>
+    <div class="row"><div class="name">+ Эксперт</div><div class="value" id="targetExpert">0 ₽</div></div>
+    <div class="row"><div class="name">Примерно при цели</div><div class="value" id="targetPremium">0 ₽</div></div>
+    <div class="calc-line" id="targetComment">Ориентир: без пересчёта коэффициента страты. Эксперт зависит от галочки в “Планах”.</div>
   </section>
 
   <section>
-    <div class="section-title"><h2>Примерная добавка к премии</h2><span class="small">ориентир</span></div>
+    <div class="section-title"><h2>Примерная добавка</h2><span class="small">кратко</span></div>
     <div id="approxAddTable"></div>
     <div class="calc-line">Ориентир без ДК, вкладов, пакетов и мультиполиса. Коэффициент страты и Эксперт сюда не входят.</div>
   </section>
@@ -366,61 +377,33 @@ function renderApproxAddTable(r,t){
   const debitTargetNeed = Math.max(Math.ceil(k.planDebit * target) - r.debit, 0);
 
   const rows = [
-    {
-      name:"POS сумма",
-      label:"Средняя ставка",
-      rate:(avgPOSRate*100).toFixed(2).replace(".",",")+"%",
-      add100:pos100Need*avgPOSRate,
-      addTarget:posTargetNeed*avgPOSRate,
-      how:"остаток POS × средняя ставка"
-    },
-    {
-      name:"КРХ с лимитом",
-      label:"Премия",
-      rate:"100 ₽",
-      add100:krh100Need*100,
-      addTarget:krhTargetNeed*100,
-      how:"остаток КРХ × 100 ₽"
-    },
-    {
-      name:"Старт КРХ",
-      label:"Премия",
-      rate:"500 ₽",
-      add100:start100Need*500,
-      addTarget:startTargetNeed*500,
-      how:"остаток стартов × 500 ₽"
-    },
-    {
-      name:"Подписки",
-      label:"Средняя премия",
-      rate:"500 ₽",
-      add100:subs100Need*500,
-      addTarget:subsTargetNeed*500,
-      how:"остаток подписок × 500 ₽"
-    },
-    {
-      name:"Дебетовые карты",
-      label:"Средняя премия",
-      rate:"100 ₽",
-      add100:debit100Need*100,
-      addTarget:debitTargetNeed*100,
-      how:"остаток дебета × 100 ₽"
-    }
+    {name:"POS сумма", rate:(avgPOSRate*100).toFixed(2).replace(".",",")+"%", add100:pos100Need*avgPOSRate, addTarget:posTargetNeed*avgPOSRate, how:"остаток POS × средняя ставка"},
+    {name:"КРХ с лимитом", rate:"100 ₽", add100:krh100Need*100, addTarget:krhTargetNeed*100, how:"остаток КРХ × 100 ₽"},
+    {name:"Старт КРХ", rate:"500 ₽", add100:start100Need*500, addTarget:startTargetNeed*500, how:"остаток стартов × 500 ₽"},
+    {name:"Подписки", rate:"500 ₽", add100:subs100Need*500, addTarget:subsTargetNeed*500, how:"остаток подписок × 500 ₽"},
+    {name:"Дебетовые карты", rate:"100 ₽", add100:debit100Need*100, addTarget:debitTargetNeed*100, how:"остаток дебета × 100 ₽"}
   ];
 
   const total100 = rows.reduce((s,x)=>s+x.add100,0);
   const totalTarget = rows.reduce((s,x)=>s+x.addTarget,0);
 
-  return rows.map(x=>`
+  const details = rows.map(x=>`
     <div class="row">
       <div class="name">${x.name}<br><span class="small">${x.how}</span></div>
-      <div class="value">${x.label}: ${x.rate}<br><span class="small">100%: ${money(x.add100)} · цель: ${money(x.addTarget)}</span></div>
+      <div class="value">${x.rate}<br><span class="small">100%: ${money(x.add100)} · цель: ${money(x.addTarget)}</span></div>
     </div>
-  `).join("") + `
-    <div class="row">
-      <div class="name"><b>Итого добавка</b><br><span class="small">без ДК, вкладов, пакетов и мультиполиса</span></div>
-      <div class="value"><b>100%: ${money(total100)}</b><br><span class="small">цель: ${money(totalTarget)}</span></div>
+  `).join("");
+
+  return `
+    <div class="compact-total">
+      <div class="box"><span>До 100%</span><b>${money(total100)}</b></div>
+      <div class="box"><span>До цели ${k.targetPercent}%</span><b>${money(totalTarget)}</b></div>
     </div>
+    <div class="calc-line">Ориентир без ДК, вкладов, пакетов и мультиполиса.</div>
+    <details class="add-details">
+      <summary>Показать расчёт</summary>
+      <div style="padding:0 14px 8px">${details}</div>
+    </details>
   `;
 }
 
@@ -436,6 +419,7 @@ function renderMain(){
  setHTML("chpList", renderChpRows(r));
  setText("chpSummary", `Корректировка ЧП: ${signedValue(Number(r.chp.toFixed(1)))} → итоговая страта ${r.finalStrata}`);
  setHTML("strataDetails", renderStrataDetails(r));
+ setText("forecastNowMini", money(r.total));
  setText("targetPremium",money(t.total));
  setText("salesAdd", "+"+money(t.addPremium||0));
  setText("targetDelta",(t.delta>=0?"+":"")+money(t.delta));
@@ -454,9 +438,9 @@ function renderMain(){
  if(t.need.dkPieces>0) parts.push(`ДК: +${t.need.dkPieces}`);
  if(r.fzPenetration<k.planFZ) parts.push(`ФЗ: до нормы ${pct(k.planFZ-r.fzPenetration)}`);
  const expertNote = k.includeExpert ? `Эксперт ${money(t.targetExpert||0)}` : "Эксперт выключен";
- setText("targetComment", `Формула: текущая премия ${money(r.total)} + продажи ${money(t.addPremium||0)} + ${expertNote}.`);
+ setText("targetComment", `Сейчас ${money(r.total)} + продажи ${money(t.addPremium||0)} + ${expertNote}.`);
  setHTML("approxAddTable", renderApproxAddTable(r,t));
- setHTML("needList", parts.length ? parts.map((x,i)=>`<div class="reco"><div class="dot">${i+1}</div><div>${x}</div></div>`).join("") : `<div class="hint">По текущим значениям цель закрыта. Можно поднять цель прогноза во вкладке “Планы”.</div>`);
+ setHTML("needList", parts.length ? parts.slice(0,3).map((x,i)=>`<div class="reco"><div class="dot">${i+1}</div><div>${x}</div></div>`).join("") : `<div class="hint">По текущим значениям цель закрыта. Можно поднять цель прогноза во вкладке “Планы”.</div>`);
  setText("sumPOSPremium",money(r.posPremium));
  setText("sumProductsPremium",money(r.productsPremium));
  setText("sumDKPremium",money(r.dkPremium));
