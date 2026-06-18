@@ -48,7 +48,7 @@ details.dashboard-details .details-body{padding:0 17px 17px}
 .mini-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
 .mini-card{background:#fff;border:1px solid var(--line);border-radius:21px;padding:14px;box-shadow:0 9px 24px rgba(38,31,21,.055)}
 .mini-card .k{font-size:12px;color:var(--muted);margin-bottom:5px}
-.mini-card .v{font-size:22px;font-weight:850}.mini-grid.compact{grid-template-columns:1fr 1fr}.goal-strip{background:#fff;border:1px solid var(--line);border-radius:22px;padding:14px;box-shadow:0 9px 24px rgba(38,31,21,.055);margin:12px 0}.goal-strip .top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.goal-strip .title{font-size:12px;color:var(--muted)}.goal-strip .amount{font-size:24px;font-weight:850}.goal-strip .sub{font-size:12px;color:var(--muted);margin-top:6px}.need-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}.need-card{background:#fbfaf7;border:1px solid var(--line);border-radius:18px;padding:12px}.need-card .n{font-size:12px;color:var(--muted);margin-bottom:4px}.need-card .v{font-size:18px;font-weight:850;line-height:1.15}.need-card .h{font-size:11px;color:var(--muted);margin-top:4px}.need-grid.one-col{grid-template-columns:1fr}.stack-gap{display:grid;gap:12px}.subsection-title{font-size:13px;font-weight:800;color:#6f675c;margin:10px 0 6px}.soft-line{height:1px;background:var(--line);margin:12px 0}
+.mini-card .v{font-size:22px;font-weight:850}.mini-grid.compact{grid-template-columns:1fr 1fr}.goal-strip{background:#fff;border:1px solid var(--line);border-radius:22px;padding:14px;box-shadow:0 9px 24px rgba(38,31,21,.055);margin:12px 0}.goal-strip .top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.goal-strip .title{font-size:12px;color:var(--muted)}.goal-strip .amount{font-size:24px;font-weight:850}.goal-strip .sub{font-size:12px;color:var(--muted);margin-top:6px}.need-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}.need-card{background:#fbfaf7;border:1px solid var(--line);border-radius:18px;padding:12px}.need-card .n{font-size:12px;color:var(--muted);margin-bottom:4px}.need-card .v{font-size:18px;font-weight:850;line-height:1.15}.need-card .h{font-size:11px;color:var(--muted);margin-top:4px}.need-grid.one-col{grid-template-columns:1fr}.need-group-title{font-size:12px;font-weight:850;color:#6f675c;margin:12px 0 7px}.goal-warning{background:#fff7e8;border:1px solid #ead7b3;border-radius:16px;padding:11px 12px;font-size:12px;color:#735728;margin-top:10px;line-height:1.35}.need-card.primary{background:#fffdf8}.need-card.alt{background:#f8fbf7}.stack-gap{display:grid;gap:12px}.subsection-title{font-size:13px;font-weight:800;color:#6f675c;margin:10px 0 6px}.soft-line{height:1px;background:var(--line);margin:12px 0}
 
 .reco{display:flex;gap:10px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--line)}.reco:first-child{border-top:0}.dot{width:22px;height:22px;min-width:22px;border-radius:50%;background:#efe2c0;color:#6b4e07;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:850}.footer{font-size:12px;color:var(--muted);line-height:1.45;text-align:center;margin:18px 7px}
 .ok{color:var(--good)}.warn{color:var(--warn)}.bad{color:var(--bad)}
@@ -57,7 +57,7 @@ details.dashboard-details .details-body{padding:0 17px 17px}
 </head>
 <body>
 <div class="app">
-<header><div><h1>Калькулятор премии</h1><div class="sub">главная — итоговая выплата и фокус</div></div><div class="pill">v5.18</div></header>
+<header><div><h1>Калькулятор премии</h1><div class="sub">главная — итоговая выплата и фокус</div></div><div class="pill">v5.19</div></header>
 <main>
 <div id="view-main" class="view active">
   <div class="hero">
@@ -69,14 +69,14 @@ details.dashboard-details .details-body{padding:0 17px 17px}
   <div class="mini-grid compact">
     <div class="mini-card"><div class="k">На руки сейчас</div><div class="v" id="payNetTop">0 ₽</div></div>
     <div class="mini-card"><div class="k">На руки при цели</div><div class="v" id="payNetGoalTop">0 ₽</div></div>
-    <div class="mini-card"><div class="k">До 120 000 на руки</div><div class="v" id="incomeGapTop">—</div></div>
+    <div class="mini-card"><div class="k">До 120 000 ₽</div><div class="v" id="incomeGapTop">—</div></div>
     <div class="mini-card"><div class="k">Страта / коэф.</div><div class="v"><span id="finalStrata">—</span> / <span id="coef">—</span></div></div>
   </div>
 
   <div class="goal-strip">
     <div class="top">
       <div>
-        <div class="title">Цель по выплате</div>
+        <div class="title">Цель 120 000 ₽</div>
         <div class="amount" id="incomeTarget">0 ₽</div>
       </div>
       <div style="text-align:right">
@@ -515,20 +515,43 @@ function incomeTargetCalc(r){
   const posEquivalent=avgPOSRate>0?motivationGap/avgPOSRate:0;
   return{desired,currentNet:current.net,netGap,requiredMotivation,motivationGap,posEquivalent};
 }
-function renderIncomeNeedCards(r,t){
+function renderIncomeNeedCards(r,t,g){
   const k=state.kpi;
-  const items=[];
-  if(t.need.posAmount>0) items.push({name:'POS сумма', value:'+'+money(t.need.posAmount), helper:'добрать по сумме POS'});
-  if(t.need.ctkAmount>0) items.push({name:'ЦТК сумма', value:'+'+money(t.need.ctkAmount), helper:'целевые кредиты'});
-  if(t.need.posPieces>0) items.push({name:'POS шт.', value:'+'+t.need.posPieces, helper:'кредиты в штуках'});
-  if(t.need.dkPieces>0) items.push({name:'ДК шт.', value:'+'+t.need.dkPieces, helper:'денежные кредиты'});
-  if(t.need.krh>0) items.push({name:'КРХ', value:'+'+t.need.krh, helper:'карты Халва'});
-  if(t.need.startKRH>0) items.push({name:'Старт КРХ', value:'+'+t.need.startKRH, helper:'активация / транзакция'});
-  if(t.need.subs>0) items.push({name:'Подписки', value:'+'+t.need.subs, helper:'нужно оформить'});
-  if(t.need.debit>0) items.push({name:'Дебет', value:'+'+t.need.debit, helper:'дебетовые карты'});
-  if(r.fzPenetration<k.planFZ) items.push({name:'ФЗ', value:'до '+pct(k.planFZ-r.fzPenetration), helper:'дотянуть до нормы'});
-  if(!items.length) return '<div class="need-card"><div class="n">Цель закрыта</div><div class="v">Ничего добирать не нужно</div><div class="h">Можно увеличить цель во вкладке “Планы”.</div></div>';
-  return items.slice(0,6).map(x=>`<div class="need-card"><div class="n">${x.name}</div><div class="v">${x.value}</div><div class="h">${x.helper}</div></div>`).join('');
+  const planItems=[];
+  if(t.need.posAmount>0) planItems.push({name:'POS до 120%', value:'+'+money(t.need.posAmount), helper:'для цели прогноза'});
+  if(t.need.ctkAmount>0) planItems.push({name:'ЦТК до 120%', value:'+'+money(t.need.ctkAmount), helper:'для KPI'});
+  if(t.need.posPieces>0) planItems.push({name:'POS шт. до 120%', value:'+'+t.need.posPieces, helper:'для ЧП'});
+  if(t.need.dkPieces>0) planItems.push({name:'ДК до 120%', value:'+'+t.need.dkPieces, helper:'для ЧП'});
+  if(t.need.krh>0) planItems.push({name:'КРХ до 120%', value:'+'+t.need.krh, helper:'для ЧП'});
+  if(t.need.startKRH>0) planItems.push({name:'Старт КРХ до 120%', value:'+'+t.need.startKRH, helper:'для KPI'});
+  if(t.need.subs>0) planItems.push({name:'Подписки до 120%', value:'+'+t.need.subs, helper:'для ЧП'});
+  if(t.need.debit>0) planItems.push({name:'Дебет до 120%', value:'+'+t.need.debit, helper:'для ЧП'});
+  if(r.fzPenetration<k.planFZ) planItems.push({name:'ФЗ до нормы', value:'до '+pct(k.planFZ-r.fzPenetration), helper:'для KPI'});
+
+  const moneyGap=Math.max(0, g.motivationGap||0);
+  const avgPOSRate=r.posAmount>0?r.posPremium/r.posAmount:0.0389;
+  const posForMoney=avgPOSRate>0?moneyGap/avgPOSRate:0;
+  const dkByMax=Math.ceil(moneyGap/5000);
+  const krhBy100=Math.ceil(moneyGap/100);
+  const subsBy500=Math.ceil(moneyGap/500);
+
+  const incomeItems = moneyGap>0 ? [
+    {name:'Нужно добрать премии', value:'+'+money(moneyGap), helper:'именно до 120 000 ₽ на руки', primary:true},
+    {name:'Вариант POS', value:'≈ '+money(posForMoney), helper:'по средней ставке POS'},
+    {name:'Вариант ДК', value:'≈ '+dkByMax+' шт.', helper:'если по максимуму 5 000 ₽'},
+    {name:'Вариант подписки', value:'≈ '+subsBy500+' шт.', helper:'если по 500 ₽'}
+  ] : [{name:'120 000 ₽ закрыто', value:'✓', helper:'по текущему расчёту', primary:true}];
+
+  const renderCards = items => items.map(x=>`<div class="need-card ${x.primary?'primary':'alt'}"><div class="n">${x.name}</div><div class="v">${x.value}</div><div class="h">${x.helper}</div></div>`).join('');
+
+  const planHtml = planItems.length ? renderCards(planItems.slice(0,6)) : '<div class="need-card"><div class="n">120% по планам</div><div class="v">закрыто</div><div class="h">по текущим значениям</div></div>';
+
+  return `
+    <div class="need-group-title">До 120 000 ₽ на руки</div>
+    <div class="need-grid">${renderCards(incomeItems)}</div>
+    <div class="goal-warning">Важно: карточки ниже — это не гарантия 120 000 ₽, а план до ${k.targetPercent}% по KPI/ЧП. Итоговая сумма зависит от страты, коэффициента, Эксперта, РК, северной и НДФЛ.</div>
+    <div class="need-group-title">До ${k.targetPercent}% по планам</div>
+    <div class="need-grid">${planHtml}</div>`;
 }
 
 function renderIncomeGoal(r,t){
@@ -540,10 +563,10 @@ function renderIncomeGoal(r,t){
   setClass("incomeGap", "value "+(g.netGap>0?"bad":"ok"));
   setClass("incomeGapTop", "v "+(g.netGap>0?"bad":"ok"));
   const msg = g.netGap>0
-    ? `Чтобы выйти на ${money(g.desired)} на руки всего, нужна итоговая премия по мотивации около ${money(g.requiredMotivation)} уже после страты, коэффициента и Эксперта. Сейчас премия ${money(r.total)}, нужно добрать примерно ${money(g.motivationGap)} премии. Ниже — ориентир, что именно нужно добрать по продуктам.`
+    ? `Чтобы выйти на ${money(g.desired)} на руки всего, нужна итоговая премия по мотивации около ${money(g.requiredMotivation)} уже после страты, коэффициента и Эксперта. Сейчас премия ${money(r.total)}, нужно добрать примерно ${money(g.motivationGap)} премии. Сначала показано, сколько премии не хватает до 120 000 ₽ на руки. Ниже отдельно — что не хватает до 120% по планам.`
     : `По текущему расчёту цель ${money(g.desired)} на руки уже закрыта.`;
   setText("incomeAction", msg);
-  setHTML("incomeNeedGrid", renderIncomeNeedCards(r,t));
+  setHTML("incomeNeedGrid", renderIncomeNeedCards(r,t,g));
 }
 
 function renderMain(){
