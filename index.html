@@ -57,7 +57,7 @@ details.dashboard-details .details-body{padding:0 17px 17px}
 </head>
 <body>
 <div class="app">
-<header><div><h1>Калькулятор премии</h1><div class="sub">главная — короткий итог, детали раскрываются</div></div><div class="pill">v5.14</div></header>
+<header><div><h1>Калькулятор премии</h1><div class="sub">главная — итог, цель и фокус</div></div><div class="pill">v5.15</div></header>
 <main>
 <div id="view-main" class="view active">
   <div class="hero">
@@ -71,11 +71,20 @@ details.dashboard-details .details-body{padding:0 17px 17px}
     <div class="mini-card"><div class="k">Добавка</div><div class="v ok" id="targetDelta">0 ₽</div></div>
     <div class="mini-card"><div class="k">Страта / коэф.</div><div class="v"><span id="finalStrata">—</span> / <span id="coef">—</span></div></div>
     <div class="mini-card"><div class="k">Цель</div><div class="v" id="targetBadge">—</div></div>
+    <div class="mini-card"><div class="k">До желаемой суммы</div><div class="v" id="incomeGapTop">—</div></div>
   </div>
 
   <section>
     <div class="section-title"><h2>Фокус на сегодня</h2><span class="small">топ-3</span></div>
     <div id="needList"></div>
+  </section>
+
+  <section>
+    <div class="section-title"><h2>Цель по выплате</h2><span class="small">на руки</span></div>
+    <div class="row"><div class="name">Хочу получить</div><div class="value" id="incomeTarget">0 ₽</div></div>
+    <div class="row"><div class="name">Примерно сейчас</div><div class="value" id="incomeNow">0 ₽</div></div>
+    <div class="row"><div class="name">Не хватает</div><div class="value" id="incomeGap">0 ₽</div></div>
+    <div class="calc-line" id="incomeAction">Расчёт появится после заполнения данных.</div>
   </section>
 
   <details class="dashboard-details">
@@ -153,6 +162,7 @@ details.dashboard-details .details-body{padding:0 17px 17px}
 <div class="form-grid">
   <div><label>Цель прогноза, %</label><input id="targetPercent" type="number"></div>
   <div><label>Оклад, ₽</label><input id="salary" type="number"></div>
+  <div><label>Хочу на руки, ₽</label><input id="desiredNet" type="number"></div>
   <div><label>Районный коэффициент, %</label><input id="regionCoef" type="number"></div>
   <div><label>Северная надбавка, %</label><input id="northCoef" type="number"></div>
   <div><label>НДФЛ, %</label><input id="ndflRate" type="number"></div>
@@ -213,7 +223,7 @@ const defaultState = {
   ],
   products: PRODUCT_DEFAULTS,
   dk: [],
-  kpi:{targetPercent:120,planPOS:550000,planPOSPieces:7,planFZ:0.8,planCTK:385000,planStart:7,planKRH:9,planSubs:7,planDKPieces:2,planProtection:90,planDebit:3,planDKAmount:400000,takeRateFact:0,csiFact:0,fraudFact:0,salary:26250,includeSalary:true,regionCoef:60,northCoef:50,ndflRate:13,includeExpert:true}
+  kpi:{targetPercent:120,planPOS:550000,planPOSPieces:7,planFZ:0.8,planCTK:385000,planStart:7,planKRH:9,planSubs:7,planDKPieces:2,planProtection:90,planDebit:3,planDKAmount:400000,takeRateFact:0,csiFact:0,fraudFact:0,salary:26250,desiredNet:120000,includeSalary:true,salary:26250,desiredNet:120000,includeSalary:true,regionCoef:60,northCoef:50,ndflRate:13,includeExpert:true}
 };
 
 let state = loadData();
@@ -471,6 +481,37 @@ function renderPayroll(r,t){
   setText("payrollComment", `При цели: примерно на руки ${money(forecast.net)}. Оклад ${state.kpi.includeSalary ? money(state.kpi.salary) : "выключен"}, РК ${state.kpi.regionCoef}% + северная ${state.kpi.northCoef}%, НДФЛ ${state.kpi.ndflRate}%.`);
 }
 
+
+function incomeTargetCalc(r){
+  const k=state.kpi;
+  const desired=num(k.desiredNet)||120000;
+  const current=payrollEstimate(r.total);
+  const region=num(k.regionCoef)/100;
+  const north=num(k.northCoef)/100;
+  const taxRate=num(k.ndflRate)/100;
+  const salary=k.includeSalary ? num(k.salary) : 0;
+  const multiplier=(1+region+north)*(1-taxRate);
+  const requiredMotivation=Math.max(desired/multiplier - salary, 0);
+  const motivationGap=Math.max(requiredMotivation-r.total, 0);
+  const netGap=Math.max(desired-current.net, 0);
+  const avgPOSRate=r.posAmount>0?r.posPremium/r.posAmount:0.0389;
+  const posEquivalent=avgPOSRate>0?motivationGap/avgPOSRate:0;
+  return{desired,currentNet:current.net,netGap,requiredMotivation,motivationGap,posEquivalent};
+}
+function renderIncomeGoal(r){
+  const g=incomeTargetCalc(r);
+  setText("incomeTarget", money(g.desired));
+  setText("incomeNow", money(g.currentNet));
+  setText("incomeGap", g.netGap>0 ? "−"+money(g.netGap) : "цель закрыта");
+  setText("incomeGapTop", g.netGap>0 ? "−"+money(g.netGap) : "✓");
+  setClass("incomeGap", "value "+(g.netGap>0?"bad":"ok"));
+  setClass("incomeGapTop", "v "+(g.netGap>0?"bad":"ok"));
+  const msg = g.netGap>0
+    ? `Чтобы выйти на ${money(g.desired)}, нужна премия по мотивации около ${money(g.requiredMotivation)}. Сейчас ${money(r.total)}, нужно добрать примерно ${money(g.motivationGap)}. Это ориентир: например около ${money(g.posEquivalent)} POS по средней ставке или комбинация POS + КРХ + подписки + ДК.`
+    : `По текущему расчёту цель ${money(g.desired)} уже закрыта.`;
+  setText("incomeAction", msg);
+}
+
 function renderMain(){
  const r=calc(), t=targetCalc(r), k=state.kpi;
  setText("totalPremium",money(r.total));
@@ -510,6 +551,7 @@ function renderMain(){
  setText("sumDKPremium",money(r.dkPremium));
  setText("expertPremium",money(r.expert));
  renderPayroll(r,t);
+ renderIncomeGoal(r);
 }
 
 function renderPOS(){
@@ -528,7 +570,7 @@ function onDKInput(e){const i=Number(e.target.dataset.dk),f=e.target.dataset.fie
 function addDK(){state.dk.push({date:new Date().toISOString().slice(0,10),type:DK_TYPES[0].name,amount:0});saveSilent();renderAll()}
 function removeDK(i){state.dk.splice(i,1);saveSilent();renderAll()}
 
-function readKPI(){["targetPercent","planPOS","planPOSPieces","planFZ","planCTK","planStart","planKRH","planSubs","planDKPieces","planProtection","planDebit","planDKAmount","takeRateFact","csiFact","fraudFact","salary","regionCoef","northCoef","ndflRate"].forEach(id=>state.kpi[id]=val(id));state.kpi.includeExpert=val("includeExpert");state.kpi.includeSalary=val("includeSalary")}
+function readKPI(){["targetPercent","planPOS","planPOSPieces","planFZ","planCTK","planStart","planKRH","planSubs","planDKPieces","planProtection","planDebit","planDKAmount","takeRateFact","csiFact","fraudFact","salary","desiredNet","regionCoef","northCoef","ndflRate"].forEach(id=>state.kpi[id]=val(id));state.kpi.includeExpert=val("includeExpert");state.kpi.includeSalary=val("includeSalary")}
 function renderKPI(){Object.entries(state.kpi).forEach(([k,v])=>set(k,v));document.querySelectorAll("#view-kpi input, #view-kpi select").forEach(e=>{if(!e.dataset.bound){e.dataset.bound="1";e.addEventListener("input",()=>{readKPI();saveSilent();renderAll()});e.addEventListener("change",()=>{readKPI();saveSilent();renderAll()})}})}
 function renderAll(){renderPOS();renderProducts();renderDK();renderKPI();renderMain()}
 function copySummary(){const r=calc(),t=targetCalc(r);const p=payrollEstimate(r.total), pf=payrollEstimate(t.total);const txt=`Премия сейчас: ${money(r.total)}\nПримерно на руки сейчас с окладом: ${money(p.net)}\nЦель: ${state.kpi.targetPercent}%\nПремия при цели: ${money(t.total)}\nПримерно на руки при цели с окладом: ${money(pf.net)}\nЭксперт в прогнозе: ${state.kpi.includeExpert?money(t.targetExpert||0):"выключен"}`;navigator.clipboard?.writeText(txt).then(()=>alert("Итог скопирован")).catch(()=>alert(txt))}
