@@ -57,7 +57,7 @@ details.dashboard-details .details-body{padding:0 17px 17px}
 </head>
 <body>
 <div class="app">
-<header><div><h1>Калькулятор премии</h1><div class="sub">главная — итоговая выплата и фокус</div></div><div class="pill">v5.31</div></header>
+<header><div><h1>Калькулятор премии</h1><div class="sub">главная — итоговая выплата и фокус</div></div><div class="pill">v5.32</div></header>
 <main>
 <div id="view-main" class="view active">
   <div class="hero">
@@ -80,7 +80,7 @@ details.dashboard-details .details-body{padding:0 17px 17px}
         <div class="amount" id="incomeTarget">0 ₽</div>
       </div>
       <div style="text-align:right">
-        <div class="title">Прогноз</div>
+        <div class="title">Нужный прогноз</div>
         <div class="amount" id="targetBadge">—</div>
       </div>
     </div>
@@ -334,8 +334,8 @@ function calc(){
  return{posAmount,ownPOSAmount,posPieces,posPremium,ctkAmount,fzPenetration,fzBase,productsPremium,dkPremium,dkAmount,dkPieces,posKPIAmount,krh,startKRH,subs,debit,protectionPercent,base,sPOS,sFZ,sCTK,sStart,mainSum,chp,mainStrata,finalStrata,coef,expert,total}
 }
 
-function targetCalc(r){
- const k=state.kpi,m=num(k.targetPercent)/100||1;
+function targetCalc(r, percentOverride){
+ const k=state.kpi,m=(percentOverride?num(percentOverride):num(k.targetPercent))/100||1;
  const t={
    posAmount:k.planPOS*m,
    posPieces:Math.ceil(k.planPOSPieces*m),
@@ -523,6 +523,24 @@ function renderPayroll(r,t){
 }
 
 
+
+function findTargetPercentForDesiredNet(r){
+  const desired=num(state.kpi.desiredNet)||120000;
+  let bestPercent=num(state.kpi.targetPercent)||120;
+  let bestT=targetCalc(r,bestPercent);
+  let bestNet=payrollEstimate(bestT.total).net;
+
+  for(let p=100;p<=200;p+=5){
+    const t=targetCalc(r,p);
+    const net=payrollEstimate(t.total).net;
+    if(net>=desired){
+      return{percent:p,t,net,reachable:true};
+    }
+    if(net>bestNet){bestPercent=p;bestT=t;bestNet=net;}
+  }
+  return{percent:bestPercent,t:bestT,net:bestNet,reachable:false};
+}
+
 function incomeTargetCalc(r){
   const k=state.kpi;
   const desired=num(k.desiredNet)||120000;
@@ -541,52 +559,41 @@ function incomeTargetCalc(r){
 }
 function renderIncomeNeedCards(r,t,g){
   const k=state.kpi;
+  const auto=findTargetPercentForDesiredNet(r);
+  const goalT=auto.t;
   const moneyGap=Math.max(0, g.motivationGap||0);
 
-  // Что нужно добрать по планам/стратам. Это не "варианты", а реальные направления.
   const plan=[];
-  if(t.need.posAmount>0) plan.push({name:'POS сумма', value:'+'+money(t.need.posAmount), helper:'добрать по кредитам'});
-  if(t.need.posPieces>0) plan.push({name:'POS шт.', value:'+'+t.need.posPieces, helper:'добрать количество'});
-  if(t.need.ctkAmount>0) plan.push({name:'ЦТК', value:'+'+money(t.need.ctkAmount), helper:'целевые кредиты'});
-  if(t.need.dkPieces>0) plan.push({name:'ДК', value:'+'+t.need.dkPieces+' шт.', helper:'денежные кредиты'});
-  if(t.need.krh>0) plan.push({name:'КРХ', value:'+'+t.need.krh+' шт.', helper:'карты Халва'});
-  if(t.need.startKRH>0) plan.push({name:'Старт КРХ', value:'+'+t.need.startKRH+' шт.', helper:'активация / транзакция'});
-  if(t.need.subs>0) plan.push({name:'Подписки', value:'+'+t.need.subs+' шт.', helper:'только до плана'});
-  if(t.need.debit>0) plan.push({name:'Дебет', value:'+'+t.need.debit+' шт.', helper:'дебетовые карты'});
-  if(r.fzPenetration<k.planFZ) plan.push({name:'ФЗ', value:'до '+pct(k.planFZ), helper:'не просаживать KPI'});
-
-  // Примерная премия, которую даст закрытие плановых дыр.
-  const dkApprox=(t.need.dkPieces||0)*5000;
-  const planPremiumApprox=(t.addPremium||0)+dkApprox;
-  const afterPlanGap=Math.max(0, moneyGap-planPremiumApprox);
-  const avgPOSRate=r.ownPOSAmount>0?r.posPremium/r.ownPOSAmount:0.0389;
-  const posExtra=avgPOSRate>0?afterPlanGap/avgPOSRate:0;
-  const dkExtra=Math.ceil(afterPlanGap/5000);
+  if(goalT.need.posAmount>0) plan.push({name:'POS сумма', value:'+'+money(goalT.need.posAmount), helper:'добрать по сумме'});
+  if(goalT.need.posPieces>0) plan.push({name:'POS шт.', value:'+'+goalT.need.posPieces, helper:'добрать количество'});
+  if(goalT.need.ctkAmount>0) plan.push({name:'ЦТК', value:'+'+money(goalT.need.ctkAmount), helper:'целевые кредиты'});
+  if(goalT.need.dkPieces>0) plan.push({name:'ДК', value:'+'+goalT.need.dkPieces+' шт.', helper:'по плану/ЧП'});
+  if(goalT.need.krh>0) plan.push({name:'КРХ', value:'+'+goalT.need.krh+' шт.', helper:'карты Халва'});
+  if(goalT.need.startKRH>0) plan.push({name:'Старт КРХ', value:'+'+goalT.need.startKRH+' шт.', helper:'активация'});
+  if(goalT.need.subs>0) plan.push({name:'Подписки', value:'+'+goalT.need.subs+' шт.', helper:'до прогноза'});
+  if(goalT.need.debit>0) plan.push({name:'Дебет', value:'+'+goalT.need.debit+' шт.', helper:'дебетовые карты'});
+  if(r.fzPenetration<k.planFZ) plan.push({name:'ФЗ', value:'не ниже '+pct(k.planFZ), helper:'держать норму'});
 
   if(moneyGap<=0){
-    return `<div class="mix-plan"><div class="mix-block"><div class="mix-title">До 120 000 ₽</div><div class="mix-big ok">цель закрыта</div><div class="mix-sub">По текущему расчёту ты уже выходишь на желаемую сумму.</div></div></div>`;
+    return `<div class="mix-plan"><div class="mix-block"><div class="mix-title">До ${money(g.desired)}</div><div class="mix-big ok">цель закрыта</div><div class="mix-sub">По текущему расчёту ты уже выходишь на желаемую сумму.</div></div></div>`;
   }
 
   const planHtml = plan.length
     ? plan.slice(0,8).map(x=>`<div class="mix-card main"><div class="t">${x.name}</div><div class="b">${x.value}</div><div class="s">${x.helper}</div></div>`).join('')
-    : `<div class="mix-card main"><div class="t">Планы</div><div class="b">закрыты</div><div class="s">основные дыры не найдены</div></div>`;
+    : `<div class="mix-card main"><div class="t">Планы</div><div class="b">закрыты</div><div class="s">по текущим данным</div></div>`;
 
-  const extraHtml = afterPlanGap>0
-    ? `<div class="mix-card extra"><div class="t">Остаток после планов</div><div class="b">+${money(afterPlanGap)}</div><div class="s">лучше добрать POS или ДК</div></div>
-       <div class="mix-card extra"><div class="t">Например POS</div><div class="b">${money(posExtra)}</div><div class="s">по средней ставке</div></div>
-       <div class="mix-card extra"><div class="t">или ДК</div><div class="b">${dkExtra} шт.</div><div class="s">если по 5 000 ₽</div></div>`
-    : `<div class="mix-card extra"><div class="t">После выполнения плана</div><div class="b">хватает</div><div class="s">ориентировочно до 120 000 ₽</div></div>`;
+  const reachText = auto.reachable
+    ? `По расчёту нужно целиться примерно в ${auto.percent}% по планам.`
+    : `Даже при 200% прогнозе расчёт даёт около ${money(auto.net)} на руки. Цель лучше пересмотреть или добавить другие реальные начисления.`;
 
   return `<div class="mix-plan">
     <div class="mix-block">
-      <div class="mix-title">Главная задача</div>
-      <div class="mix-big">добрать ${money(moneyGap)} премии</div>
-      <div class="mix-sub">Не одним продуктом. Ниже — смешанный план: сначала закрыть то, что влияет на планы и страту.</div>
+      <div class="mix-title">Чтобы выйти на ${money(g.desired)} на руки</div>
+      <div class="mix-big">${auto.reachable ? 'цель ≈ '+auto.percent+'%' : 'цель выше 200%'}</div>
+      <div class="mix-sub">${reachText} Не считаю цель одним продуктом: план строится через разные показатели.</div>
     </div>
-    <div class="mix-title">1. Закрыть плановые дыры</div>
+    <div class="mix-title">Что добрать по продуктам</div>
     <div class="mix-grid">${planHtml}</div>
-    <div class="mix-title">2. Если после этого не хватает до 120 000 ₽</div>
-    <div class="mix-grid">${extraHtml}</div>
   </div>`;
 }
 
@@ -598,20 +605,23 @@ function renderIncomeGoal(r,t){
   setText("incomeGapTop", g.netGap>0 ? "−"+money(g.netGap) : "✓");
   setClass("incomeGap", "value "+(g.netGap>0?"bad":"ok"));
   setClass("incomeGapTop", "v "+(g.netGap>0?"bad":"ok"));
+  const auto=findTargetPercentForDesiredNet(r);
   const msg = g.netGap>0
-    ? `Чтобы выйти на ${money(g.desired)} на руки, нужно добрать примерно ${money(g.motivationGap)} премии. Ниже — смешанный план по продуктам и планам.`
+    ? (auto.reachable
+      ? `Чтобы выйти на ${money(g.desired)} на руки, ориентир по прогнозу — около ${auto.percent}%. Ниже — что добрать по продуктам.`
+      : `Цель ${money(g.desired)} выше реалистичного прогноза до 200%. Ниже показан максимум по планам, без абсурдных вариантов одним продуктом.`)
     : `По текущему расчёту цель ${money(g.desired)} на руки уже закрыта.`;
   setText("incomeAction", msg);
   setHTML("incomeNeedGrid", renderIncomeNeedCards(r,t,g));
 }
 
 function renderMain(){
- const r=calc(), t=targetCalc(r), k=state.kpi;
+ const r=calc(), autoGoal=findTargetPercentForDesiredNet(r), t=autoGoal.t, k=state.kpi;
  setText("totalPremium",money(r.total));
  setText("formulaText",`${money(r.base)} × ${r.coef.toFixed(2)} + ${money(r.expert)}`);
  setText("finalStrata",r.finalStrata);
  setText("coef",r.coef.toFixed(2));
- setText("targetBadge",k.targetPercent+"%");
+ setText("targetBadge",autoGoal.reachable ? autoGoal.percent+"%" : "200%+");
  setHTML("mainKpiList", renderMainKpiRows(r,t));
  setText("mainKpiSummary", `Сумма страт KPI: ${r.mainSum} → основная страта ${r.mainStrata}`);
  setHTML("chpList", renderChpRows(r));
