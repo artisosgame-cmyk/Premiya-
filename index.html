@@ -57,7 +57,7 @@ details.dashboard-details .details-body{padding:0 17px 17px}
 </head>
 <body>
 <div class="app">
-<header><div><h1>Калькулятор премии</h1><div class="sub">главная — итоговая выплата и фокус</div></div><div class="pill">v5.33</div></header>
+<header><div><h1>Калькулятор премии</h1><div class="sub">главная — итоговая выплата и фокус</div></div><div class="pill">v5.34</div></header>
 <main>
 <div id="view-main" class="view active">
   <div class="hero">
@@ -524,21 +524,34 @@ function renderPayroll(r,t){
 
 
 
+
+function forecastTotalWithNewCoef(r,t){
+  // Более честный прогноз: сначала считаем прогнозную страту,
+  // потом применяем прогнозный коэффициент к базе премии.
+  const forecastCoef=coefficient(t.targetFinalStrata);
+  const forecastBase=r.base + (t.addPremium||0);
+  const forecastExpert=t.targetExpert||0;
+  const total=forecastBase*forecastCoef + forecastExpert;
+  return{total,coef:forecastCoef,base:forecastBase,expert:forecastExpert};
+}
+
 function findTargetPercentForDesiredNet(r){
   const desired=num(state.kpi.desiredNet)||120000;
   let bestPercent=num(state.kpi.targetPercent)||120;
   let bestT=targetCalc(r,bestPercent);
-  let bestNet=payrollEstimate(bestT.total).net;
+  let bestForecast=forecastTotalWithNewCoef(r,bestT);
+  let bestNet=payrollEstimate(bestForecast.total).net;
 
   for(let p=100;p<=200;p+=5){
     const t=targetCalc(r,p);
-    const net=payrollEstimate(t.total).net;
+    const forecast=forecastTotalWithNewCoef(r,t);
+    const net=payrollEstimate(forecast.total).net;
     if(net>=desired){
-      return{percent:p,t,net,reachable:true};
+      return{percent:p,t,net,reachable:true,forecast};
     }
-    if(net>bestNet){bestPercent=p;bestT=t;bestNet=net;}
+    if(net>bestNet){bestPercent=p;bestT=t;bestNet=net;bestForecast=forecast;}
   }
-  return{percent:bestPercent,t:bestT,net:bestNet,reachable:false};
+  return{percent:bestPercent,t:bestT,net:bestNet,reachable:false,forecast:bestForecast};
 }
 
 function incomeTargetCalc(r){
@@ -604,7 +617,7 @@ function renderIncomeNeedCards(r,t,g){
   if(goalT.need.debit>first.t.need.debit) goalItems.push({name:'Дебет сверху', value:'+'+(goalT.need.debit-first.t.need.debit)+' шт.', helper:'если цель выше 120%'});
 
   const reachText = auto.reachable
-    ? `После сильной страты ориентир до суммы — примерно ${auto.percent}% по планам.`
+    ? `С учётом новой страты и коэффициента ориентир до суммы — примерно ${auto.percent}% по планам.`
     : `Даже при 200% прогнозе расчёт даёт около ${money(auto.net)} на руки. Цель может быть нереалистичной без других начислений.`;
 
   const secondHtml = goalItems.length
@@ -615,7 +628,7 @@ function renderIncomeNeedCards(r,t,g){
     <div class="mix-block">
       <div class="mix-title">Логика цели</div>
       <div class="mix-big">сначала 1 страта</div>
-      <div class="mix-sub">Премия зависит от коэффициента. Поэтому сначала закрываем то, что даёт сильную страту, а уже потом добираем сумму на руки.</div>
+      <div class="mix-sub">Премия зависит от коэффициента. Поэтому калькулятор сначала прогнозирует страту, пересчитывает коэффициент и только потом подбирает процент до суммы на руки.</div>
     </div>
 
     <div class="mix-title">1. Что сделать для 1 страты / сильной зоны</div>
@@ -650,7 +663,7 @@ function renderIncomeGoal(r,t){
 }
 
 function renderMain(){
- const r=calc(), autoGoal=findTargetPercentForDesiredNet(r), t=autoGoal.t, k=state.kpi;
+ const r=calc(), autoGoal=findTargetPercentForDesiredNet(r), t=autoGoal.t, k=state.kpi, forecast=autoGoal.forecast||forecastTotalWithNewCoef(r,t);
  setText("totalPremium",money(r.total));
  setText("formulaText",`${money(r.base)} × ${r.coef.toFixed(2)} + ${money(r.expert)}`);
  setText("finalStrata",r.finalStrata);
@@ -662,7 +675,7 @@ function renderMain(){
  setText("chpSummary", `Корректировка ЧП: ${signedValue(Number(r.chp.toFixed(1)))} → итоговая страта ${r.finalStrata}`);
  setHTML("strataDetails", renderStrataDetails(r));
  setText("forecastNowMini", money(r.total));
- setText("targetPremium",money(t.total));
+ setText("targetPremium",money(forecast.total));
  setText("salesAdd", "+"+money(t.addPremium||0));
  setText("targetDelta",(t.delta>=0?"+":"")+money(t.delta));
  setClass("targetDelta","value "+(t.delta>=0?"ok":"bad"));
@@ -680,14 +693,14 @@ function renderMain(){
  if(t.need.dkPieces>0) parts.push(`ДК: +${t.need.dkPieces}`);
  if(r.fzPenetration<k.planFZ) parts.push(`ФЗ: до нормы ${pct(k.planFZ-r.fzPenetration)}`);
  const expertNote = k.includeExpert ? `Эксперт ${money(t.targetExpert||0)}` : "Эксперт выключен";
- setText("targetComment", `Сейчас ${money(r.total)} + продажи ${money(t.addPremium||0)} + ${expertNote}.`);
+ setText("targetComment", `Прогноз: база ${money(forecast.base)} × коэф. ${forecast.coef.toFixed(2)} + Эксперт ${money(forecast.expert)}.`);
  setHTML("approxAddTable", renderApproxAddTable(r,t));
  setHTML("needList", parts.length ? parts.slice(0,3).map((x,i)=>`<div class="reco"><div class="dot">${i+1}</div><div>${x}</div></div>`).join("") : `<div class="hint">По текущим значениям цель закрыта. Можно поднять цель прогноза во вкладке “Планы”.</div>`);
  setText("sumPOSPremium",money(r.posPremium));
  setText("sumProductsPremium",money(r.productsPremium));
  setText("sumDKPremium",money(r.dkPremium));
  setText("expertPremium",money(r.expert));
- renderPayroll(r,t);
+ renderPayroll(r,{...t,total:forecast.total});
  renderIncomeGoal(r,t);
 }
 
