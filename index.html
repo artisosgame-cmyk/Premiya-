@@ -57,7 +57,7 @@ details.dashboard-details .details-body{padding:0 17px 17px}
 </head>
 <body>
 <div class="app">
-<header><div><h1>Калькулятор премии</h1><div class="sub">главная — итоговая выплата и фокус</div></div><div class="pill">v5.26</div></header>
+<header><div><h1>Калькулятор премии</h1><div class="sub">главная — итоговая выплата и фокус</div></div><div class="pill">v5.27</div></header>
 <main>
 <div id="view-main" class="view active">
   <div class="hero">
@@ -227,7 +227,7 @@ details.dashboard-details .details-body{padding:0 17px 17px}
 const POS_RATES = {"39%": {"rates": [0.017, 0.009, 0.026, 0.017, 0.031, 0.019, 0.048, 0.021, 0.051, 0.023, 0.055, 0.025]}, "32%": {"rates": [0.017, 0.009, 0.026, 0.017, 0.031, 0.019, 0.048, 0.021, 0.051, 0.023, 0.055, 0.025]}, "29,9%": {"rates": [0.016, 0.008, 0.025, 0.016, 0.03, 0.019, 0.042, 0.021, 0.049, 0.023, 0.053, 0.025]}, "26%": {"rates": [0.012, 0.005, 0.02, 0.01, 0.021, 0.011, 0.033, 0.02, 0.04, 0.021, 0.044, 0.022]}, "25%": {"rates": [0.011, 0.004, 0.019, 0.009, 0.02, 0.01, 0.027, 0.011, 0.035, 0.012, 0.039, 0.013]}, "23%": {"rates": [0.007, 0.002, 0.012, 0.005, 0.018, 0.011, 0.02, 0.011, 0.025, 0.011, 0.03, 0.011]}, "21%": {"rates": [0.005, 0.001, 0.009, 0.0015, 0.01, 0.002, 0.013, 0.005, 0.018, 0.008, 0.02, 0.009]}, "20%": {"rates": [0.005, 0.001, 0.008, 0.0015, 0.009, 0.002, 0.012, 0.005, 0.017, 0.007, 0.019, 0.008]}, "19%": {"rates": [0, 0, 0.004, 0.001, 0.005, 0.0015, 0.01, 0.0045, 0.013, 0.0065, 0.016, 0.0075]}, "18%": {"rates": [0, 0, 0.003, 0.0005, 0.004, 0.001, 0.008, 0.004, 0.01, 0.006, 0.015, 0.007]}, "17%": {"rates": [0, 0, 0.002, 0.0002, 0.003, 0.0005, 0.007, 0.0035, 0.009, 0.0055, 0.014, 0.0065]}, "16%": {"rates": [0, 0, 0.001, 0.0001, 0.002, 0.0005, 0.006, 0.003, 0.008, 0.005, 0.013, 0.006]}};
 const PRODUCT_DEFAULTS = [{"group": "Карты Халва", "name": "КРХ с лимитом", "qty": 7, "rate": 100}, {"group": "Карты Халва", "name": "КРХ 0.1 с транзакцией", "qty": 0, "rate": 100}, {"group": "Карты Халва", "name": "Старт КРХ / транзакция", "qty": 6, "rate": 500}, {"group": "Подписки", "name": "Халва.Десятка годовая", "qty": 4, "rate": 500}, {"group": "Подписки", "name": "Халва.Десятка ежемесячная / Все и везде", "qty": 0, "rate": 200}, {"group": "Подписки", "name": "Оптима годовая", "qty": 0, "rate": 500}, {"group": "Подписки", "name": "Оптима ежемесячная", "qty": 0, "rate": 300}, {"group": "Дебет / вклады", "name": "Дебетовая карта с % на остаток", "qty": 0, "rate": 250}, {"group": "Дебет / вклады", "name": "Дебетовая карта с кешбеком 2%", "qty": 1, "rate": 100}, {"group": "Дебет / вклады", "name": "Оформление вклада", "qty": 0, "rate": 200}, {"group": "Пакеты с защитой", "name": "FIS пакет 2 / 9 999", "qty": 0, "rate": 700}, {"group": "Пакеты с защитой", "name": "FIS пакет 3 / 14 999", "qty": 0, "rate": 750}, {"group": "Пакеты с защитой", "name": "FIS пакет 4 / 19 999", "qty": 0, "rate": 1000}, {"group": "Пакеты с защитой", "name": "FIS пакет 5 / 29 999", "qty": 0, "rate": 1700}, {"group": "Пакеты с защитой", "name": "Кредит с ФЗ+ТП пакет 1 / 4 999", "qty": 0, "rate": 500}, {"group": "Пакеты с защитой", "name": "Кредит с ФЗ+ТП пакет 2 / 9 999", "qty": 0, "rate": 1000}, {"group": "Пакеты с защитой", "name": "Кредит с ФЗ+ТП пакет 3 / 14 999", "qty": 0, "rate": 1500}, {"group": "Пакеты с защитой", "name": "Кредит с ФЗ+ТП пакет 4 / 19 999", "qty": 0, "rate": 2000}];
 const DK_TYPES = [{"name": "ДК / ДКПЗА через FIS с ФЗ", "rate": 0.015, "fixed": 0, "limit": 5000, "inPOS": true}, {"name": "КНК через ЛИД только с ФЗ", "rate": 0.01, "fixed": 0, "limit": 5000, "inPOS": true}, {"name": "КНК зарплатникам без ФЗ, ТП от 9 999", "rate": 0.01, "fixed": 0, "limit": 5000, "inPOS": false}, {"name": "КНК стабильный через FIS без ФЗ, ТП от 9 999", "rate": 0.015, "fixed": 0, "limit": 5000, "inPOS": false}, {"name": "ДКПЗН", "rate": 0, "fixed": 2000, "limit": 0, "inPOS": false}, {"name": "Автокредит / ДКПЗА через ЛИД", "rate": 0, "fixed": 1250, "limit": 0, "inPOS": false}, {"name": "ДК МКК Быстрые покупки без ФЗ", "rate": 0, "fixed": 1000, "limit": 0, "inPOS": false}, {"name": "ДК МКК Быстрые покупки с ФЗ", "rate": 0, "fixed": 1500, "limit": 0, "inPOS": true}];
-const STORAGE_KEY = "premiumCalculatorV5";
+const STORAGE_KEY = "premiumCalculatorV527_clean";
 
 const defaultState = {
   pos:[
@@ -243,13 +243,14 @@ const defaultState = {
 
 let state = loadData();
 function migrateState(){
-  if(!state.pos) state.pos=[];
+  if(!state || typeof state!=="object") state=JSON.parse(JSON.stringify(defaultState));
+  if(!Array.isArray(state.pos) || !state.pos.length) state.pos=JSON.parse(JSON.stringify(defaultState.pos));
   state.pos.forEach(r=>{
     if(typeof r.externalBank==="undefined") r.externalBank=false;
     if(r.externalBank){r.fz=false;r.vis=false;r.ctk=false;r.complex=false;}
   });
-  if(!state.products || !state.products.length) state.products=JSON.parse(JSON.stringify(PRODUCT_DEFAULTS));
-  if(!state.dk) state.dk=[];
+  if(!Array.isArray(state.products) || !state.products.length) state.products=JSON.parse(JSON.stringify(PRODUCT_DEFAULTS));
+  if(!Array.isArray(state.dk)) state.dk=[];
   if(!state.kpi) state.kpi={};
   const defaults=defaultState.kpi||{};
   Object.keys(defaults).forEach(k=>{if(typeof state.kpi[k]==="undefined") state.kpi[k]=defaults[k];});
@@ -690,11 +691,23 @@ function removeDK(i){state.dk.splice(i,1);saveSilent();renderAll()}
 
 function readKPI(){["targetPercent","planPOS","planPOSPieces","planFZ","planCTK","planStart","planKRH","planSubs","planDKPieces","planProtection","planDebit","planDKAmount","takeRateFact","csiFact","fraudFact","salary","desiredNet","regionCoef","northCoef","ndflRate"].forEach(id=>state.kpi[id]=val(id));state.kpi.includeExpert=val("includeExpert");state.kpi.includeSalary=val("includeSalary")}
 function renderKPI(){Object.entries(state.kpi).forEach(([k,v])=>set(k,v));document.querySelectorAll("#view-kpi input, #view-kpi select").forEach(e=>{if(!e.dataset.bound){e.dataset.bound="1";e.addEventListener("input",()=>{readKPI();saveSilent();renderAll()});e.addEventListener("change",()=>{readKPI();saveSilent();renderAll()})}})}
-function renderAll(){renderPOS();renderProducts();renderDK();renderKPI();renderMain()}
+function renderAll(){
+  try{renderPOS()}catch(e){console.error("renderPOS",e)}
+  try{renderProducts()}catch(e){console.error("renderProducts",e)}
+  try{renderDK()}catch(e){console.error("renderDK",e)}
+  try{renderKPI()}catch(e){console.error("renderKPI",e)}
+  try{renderMain()}catch(e){console.error("renderMain",e)}
+}
 function copySummary(){const r=calc(),t=targetCalc(r);const p=payrollEstimate(r.total), pf=payrollEstimate(t.total);const txt=`Премия сейчас: ${money(r.total)}\nПримерно на руки сейчас с окладом: ${money(p.net)}\nЦель: ${state.kpi.targetPercent}%\nПремия при цели: ${money(t.total)}\nПримерно на руки при цели с окладом: ${money(pf.net)}\nЭксперт в прогнозе: ${state.kpi.includeExpert?money(t.targetExpert||0):"выключен"}`;navigator.clipboard?.writeText(txt).then(()=>alert("Итог скопирован")).catch(()=>alert(txt))}
 document.querySelectorAll(".tab").forEach(btn=>btn.addEventListener("click",()=>{readKPI();document.querySelectorAll(".tab").forEach(b=>b.classList.remove("active"));btn.classList.add("active");document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));document.getElementById("view-"+btn.dataset.view).classList.add("active");saveSilent();renderMain();scrollTo({top:0,behavior:"smooth"})}));
 window.addEventListener("beforeunload",()=>{try{readKPI();saveSilent()}catch(e){}});
 renderAll();
+function ensureVisibleTables(){
+  if(document.getElementById("posList") && !document.getElementById("posList").children.length){
+    state=JSON.parse(JSON.stringify(defaultState));migrateState();saveSilent();renderAll();
+  }
+}
+setTimeout(ensureVisibleTables,100);
 </script>
 </body>
 </html>
