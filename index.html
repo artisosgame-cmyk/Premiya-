@@ -57,7 +57,7 @@ details.dashboard-details .details-body{padding:0 17px 17px}
 </head>
 <body>
 <div class="app">
-<header><div><h1>Калькулятор премии</h1><div class="sub">главная — итоговая выплата и фокус</div></div><div class="pill">v5.25</div></header>
+<header><div><h1>Калькулятор премии</h1><div class="sub">главная — итоговая выплата и фокус</div></div><div class="pill">v5.26</div></header>
 <main>
 <div id="view-main" class="view active">
   <div class="hero">
@@ -242,11 +242,24 @@ const defaultState = {
 };
 
 let state = loadData();
+function migrateState(){
+  if(!state.pos) state.pos=[];
+  state.pos.forEach(r=>{
+    if(typeof r.externalBank==="undefined") r.externalBank=false;
+    if(r.externalBank){r.fz=false;r.vis=false;r.ctk=false;r.complex=false;}
+  });
+  if(!state.products || !state.products.length) state.products=JSON.parse(JSON.stringify(PRODUCT_DEFAULTS));
+  if(!state.dk) state.dk=[];
+  if(!state.kpi) state.kpi={};
+  const defaults=defaultState.kpi||{};
+  Object.keys(defaults).forEach(k=>{if(typeof state.kpi[k]==="undefined") state.kpi[k]=defaults[k];});
+}
+migrateState();
 
-function loadData(){try{const raw=localStorage.getItem(STORAGE_KEY);if(raw){const saved=JSON.parse(raw);if(saved&&saved.pos&&saved.products&&saved.kpi)return saved}}catch(e){}return JSON.parse(JSON.stringify(defaultState))}
+function loadData(){try{const raw=localStorage.getItem(STORAGE_KEY);if(raw){const saved=JSON.parse(raw);if(saved&&saved.pos&&saved.kpi){ if(!saved.products||!saved.products.length) saved.products=JSON.parse(JSON.stringify(PRODUCT_DEFAULTS)); if(!saved.dk) saved.dk=[]; return saved }}}catch(e){}return JSON.parse(JSON.stringify(defaultState))}
 function saveData(){readKPI();localStorage.setItem(STORAGE_KEY,JSON.stringify(state));alert("Сохранено")}
 function saveSilent(){localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}
-function resetData(){state=JSON.parse(JSON.stringify(defaultState));saveSilent();renderAll()}
+function resetData(){state=JSON.parse(JSON.stringify(defaultState));migrateState();saveSilent();renderAll()}
 function num(v){return Number(v)||0}
 function money(n){return Math.round(n||0).toLocaleString("ru-RU")+" ₽"}
 function pct(n){return isFinite(n)?Math.round(n*100)+"%":"0%"}
