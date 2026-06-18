@@ -38,6 +38,18 @@ details.add-details[open] summary:after{content:"↑"}
 .compact-total .box span{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}
 .compact-total .box b{font-size:20px}
 
+
+details.dashboard-details{margin:12px 0;background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:0 10px 28px rgba(38,31,21,.055);overflow:hidden}
+details.dashboard-details summary{list-style:none;padding:17px;font-weight:850;font-size:17px;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+details.dashboard-details summary::-webkit-details-marker{display:none}
+details.dashboard-details summary:after{content:"↓";color:var(--muted)}
+details.dashboard-details[open] summary:after{content:"↑"}
+details.dashboard-details .details-body{padding:0 17px 17px}
+.mini-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+.mini-card{background:#fff;border:1px solid var(--line);border-radius:21px;padding:14px;box-shadow:0 9px 24px rgba(38,31,21,.055)}
+.mini-card .k{font-size:12px;color:var(--muted);margin-bottom:5px}
+.mini-card .v{font-size:22px;font-weight:850}
+
 .reco{display:flex;gap:10px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--line)}.reco:first-child{border-top:0}.dot{width:22px;height:22px;min-width:22px;border-radius:50%;background:#efe2c0;color:#6b4e07;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:850}.footer{font-size:12px;color:var(--muted);line-height:1.45;text-align:center;margin:18px 7px}
 .ok{color:var(--good)}.warn{color:var(--warn)}.bad{color:var(--bad)}
 @media(max-width:390px){.money{font-size:36px}.metric .v{font-size:17px}.prod-row{grid-template-columns:1fr 70px 82px}}
@@ -45,60 +57,69 @@ details.add-details[open] summary:after{content:"↑"}
 </head>
 <body>
 <div class="app">
-<header><div><h1>Калькулятор премии</h1><div class="sub">главная — инфографика, ввод — во вкладках</div></div><div class="pill">v5.11</div></header>
+<header><div><h1>Калькулятор премии</h1><div class="sub">главная — короткий итог, детали раскрываются</div></div><div class="pill">v5.12</div></header>
 <main>
 <div id="view-main" class="view active">
   <div class="hero">
     <div class="label">Итоговая премия сейчас</div>
     <div class="money" id="totalPremium">0 ₽</div>
-    <div class="note" id="formulaText">все расчёты связаны с POS, продуктами, ДК и планами</div>
+    <div class="note" id="formulaText">короткий итог без перегруза</div>
   </div>
 
-  <div class="grid3">
-    <div class="metric"><div class="k">Страта</div><div class="v" id="finalStrata">—</div></div>
-    <div class="metric"><div class="k">Коэф.</div><div class="v" id="coef">—</div></div>
-    <div class="metric"><div class="k">Цель</div><div class="v" id="targetBadge">—</div></div>
+  <div class="mini-grid">
+    <div class="mini-card"><div class="k">Примерно при цели</div><div class="v" id="targetPremium">0 ₽</div></div>
+    <div class="mini-card"><div class="k">Добавка</div><div class="v ok" id="targetDelta">0 ₽</div></div>
+    <div class="mini-card"><div class="k">Страта / коэф.</div><div class="v"><span id="finalStrata">—</span> / <span id="coef">—</span></div></div>
+    <div class="mini-card"><div class="k">Цель</div><div class="v" id="targetBadge">—</div></div>
   </div>
 
   <section>
-    <div class="section-title"><h2>Основная карта KPI</h2><span class="small">главные показатели</span></div>
-    <div id="mainKpiList"></div>
-    <div class="calc-line" id="mainKpiSummary">Расчёт основной страты.</div>
-  </section>
-
-  <section>
-    <div class="section-title"><h2>Чемпионат профессионалов</h2><span class="small">влияние на страту</span></div>
-    <div id="chpList"></div>
-    <div class="calc-line" id="chpSummary">Корректировка ЧП.</div>
-  </section>
-
-  <section>
-    <div class="section-title"><h2>Примерный прогноз</h2><span class="tag" id="mainStatus">—</span></div>
-    <div class="row"><div class="name">Сейчас</div><div class="value" id="forecastNowMini">0 ₽</div></div>
-    <div class="row"><div class="name">+ продажи</div><div class="value" id="salesAdd">0 ₽</div></div>
-    <div class="row"><div class="name">+ Эксперт</div><div class="value" id="targetExpert">0 ₽</div></div>
-    <div class="row"><div class="name">Примерно при цели</div><div class="value" id="targetPremium">0 ₽</div></div>
-    <div class="calc-line" id="targetComment">Ориентир: без пересчёта коэффициента страты. Эксперт зависит от галочки в “Планах”.</div>
-  </section>
-
-  <section>
-    <div class="section-title"><h2>Примерная добавка</h2><span class="small">кратко</span></div>
-    <div id="approxAddTable"></div>
-    <div class="calc-line">Примечание: без ДК, вкладов, пакетов и мультиполиса. Коэффициент страты и Эксперт не входят.</div>
-  </section>
-
-  <section>
-    <div class="section-title"><h2>Фокус на сегодня</h2><span class="small">что добить в первую очередь</span></div>
+    <div class="section-title"><h2>Фокус на сегодня</h2><span class="small">топ-3</span></div>
     <div id="needList"></div>
   </section>
 
-  <section>
-    <div class="section-title"><h2>Состав премии</h2><span class="small">без повторов</span></div>
-    <div class="row"><div class="name">POS</div><div class="value" id="sumPOSPremium">0 ₽</div></div>
-    <div class="row"><div class="name">Продукты</div><div class="value" id="sumProductsPremium">0 ₽</div></div>
-    <div class="row"><div class="name">ДК</div><div class="value" id="sumDKPremium">0 ₽</div></div>
-    <div class="row"><div class="name">Эксперт</div><div class="value" id="expertPremium">0 ₽</div></div>
-  </section>
+  <details class="dashboard-details">
+    <summary>Примерный прогноз</summary>
+    <div class="details-body">
+      <div class="row"><div class="name">Сейчас</div><div class="value" id="forecastNowMini">0 ₽</div></div>
+      <div class="row"><div class="name">+ продажи</div><div class="value" id="salesAdd">0 ₽</div></div>
+      <div class="row"><div class="name">+ Эксперт</div><div class="value" id="targetExpert">0 ₽</div></div>
+      <div class="calc-line" id="targetComment">Цель меняется во вкладке “Планы”.</div>
+    </div>
+  </details>
+
+  <details class="dashboard-details">
+    <summary>Основная карта KPI</summary>
+    <div class="details-body">
+      <div id="mainKpiList"></div>
+      <div class="calc-line" id="mainKpiSummary">Расчёт основной страты.</div>
+    </div>
+  </details>
+
+  <details class="dashboard-details">
+    <summary>Чемпионат профессионалов</summary>
+    <div class="details-body">
+      <div id="chpList"></div>
+      <div class="calc-line" id="chpSummary">Корректировка ЧП.</div>
+    </div>
+  </details>
+
+  <details class="dashboard-details">
+    <summary>Примерная добавка</summary>
+    <div class="details-body">
+      <div id="approxAddTable"></div>
+    </div>
+  </details>
+
+  <details class="dashboard-details">
+    <summary>Состав премии</summary>
+    <div class="details-body">
+      <div class="row"><div class="name">POS</div><div class="value" id="sumPOSPremium">0 ₽</div></div>
+      <div class="row"><div class="name">Продукты</div><div class="value" id="sumProductsPremium">0 ₽</div></div>
+      <div class="row"><div class="name">ДК</div><div class="value" id="sumDKPremium">0 ₽</div></div>
+      <div class="row"><div class="name">Эксперт</div><div class="value" id="expertPremium">0 ₽</div></div>
+    </div>
+  </details>
 </div>
 
 <div id="view-pos" class="view">
