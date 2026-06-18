@@ -57,7 +57,7 @@ details.dashboard-details .details-body{padding:0 17px 17px}
 </head>
 <body>
 <div class="app">
-<header><div><h1>Калькулятор премии</h1><div class="sub">главная — итоговая выплата и фокус</div></div><div class="pill">v5.30</div></header>
+<header><div><h1>Калькулятор премии</h1><div class="sub">главная — итоговая выплата и фокус</div></div><div class="pill">v5.25</div></header>
 <main>
 <div id="view-main" class="view active">
   <div class="hero">
@@ -227,7 +227,7 @@ details.dashboard-details .details-body{padding:0 17px 17px}
 const POS_RATES = {"39%": {"rates": [0.017, 0.009, 0.026, 0.017, 0.031, 0.019, 0.048, 0.021, 0.051, 0.023, 0.055, 0.025]}, "32%": {"rates": [0.017, 0.009, 0.026, 0.017, 0.031, 0.019, 0.048, 0.021, 0.051, 0.023, 0.055, 0.025]}, "29,9%": {"rates": [0.016, 0.008, 0.025, 0.016, 0.03, 0.019, 0.042, 0.021, 0.049, 0.023, 0.053, 0.025]}, "26%": {"rates": [0.012, 0.005, 0.02, 0.01, 0.021, 0.011, 0.033, 0.02, 0.04, 0.021, 0.044, 0.022]}, "25%": {"rates": [0.011, 0.004, 0.019, 0.009, 0.02, 0.01, 0.027, 0.011, 0.035, 0.012, 0.039, 0.013]}, "23%": {"rates": [0.007, 0.002, 0.012, 0.005, 0.018, 0.011, 0.02, 0.011, 0.025, 0.011, 0.03, 0.011]}, "21%": {"rates": [0.005, 0.001, 0.009, 0.0015, 0.01, 0.002, 0.013, 0.005, 0.018, 0.008, 0.02, 0.009]}, "20%": {"rates": [0.005, 0.001, 0.008, 0.0015, 0.009, 0.002, 0.012, 0.005, 0.017, 0.007, 0.019, 0.008]}, "19%": {"rates": [0, 0, 0.004, 0.001, 0.005, 0.0015, 0.01, 0.0045, 0.013, 0.0065, 0.016, 0.0075]}, "18%": {"rates": [0, 0, 0.003, 0.0005, 0.004, 0.001, 0.008, 0.004, 0.01, 0.006, 0.015, 0.007]}, "17%": {"rates": [0, 0, 0.002, 0.0002, 0.003, 0.0005, 0.007, 0.0035, 0.009, 0.0055, 0.014, 0.0065]}, "16%": {"rates": [0, 0, 0.001, 0.0001, 0.002, 0.0005, 0.006, 0.003, 0.008, 0.005, 0.013, 0.006]}};
 const PRODUCT_DEFAULTS = [{"group": "Карты Халва", "name": "КРХ с лимитом", "qty": 7, "rate": 100}, {"group": "Карты Халва", "name": "КРХ 0.1 с транзакцией", "qty": 0, "rate": 100}, {"group": "Карты Халва", "name": "Старт КРХ / транзакция", "qty": 6, "rate": 500}, {"group": "Подписки", "name": "Халва.Десятка годовая", "qty": 4, "rate": 500}, {"group": "Подписки", "name": "Халва.Десятка ежемесячная / Все и везде", "qty": 0, "rate": 200}, {"group": "Подписки", "name": "Оптима годовая", "qty": 0, "rate": 500}, {"group": "Подписки", "name": "Оптима ежемесячная", "qty": 0, "rate": 300}, {"group": "Дебет / вклады", "name": "Дебетовая карта с % на остаток", "qty": 0, "rate": 250}, {"group": "Дебет / вклады", "name": "Дебетовая карта с кешбеком 2%", "qty": 1, "rate": 100}, {"group": "Дебет / вклады", "name": "Оформление вклада", "qty": 0, "rate": 200}, {"group": "Пакеты с защитой", "name": "FIS пакет 2 / 9 999", "qty": 0, "rate": 700}, {"group": "Пакеты с защитой", "name": "FIS пакет 3 / 14 999", "qty": 0, "rate": 750}, {"group": "Пакеты с защитой", "name": "FIS пакет 4 / 19 999", "qty": 0, "rate": 1000}, {"group": "Пакеты с защитой", "name": "FIS пакет 5 / 29 999", "qty": 0, "rate": 1700}, {"group": "Пакеты с защитой", "name": "Кредит с ФЗ+ТП пакет 1 / 4 999", "qty": 0, "rate": 500}, {"group": "Пакеты с защитой", "name": "Кредит с ФЗ+ТП пакет 2 / 9 999", "qty": 0, "rate": 1000}, {"group": "Пакеты с защитой", "name": "Кредит с ФЗ+ТП пакет 3 / 14 999", "qty": 0, "rate": 1500}, {"group": "Пакеты с защитой", "name": "Кредит с ФЗ+ТП пакет 4 / 19 999", "qty": 0, "rate": 2000}];
 const DK_TYPES = [{"name": "ДК / ДКПЗА через FIS с ФЗ", "rate": 0.015, "fixed": 0, "limit": 5000, "inPOS": true}, {"name": "КНК через ЛИД только с ФЗ", "rate": 0.01, "fixed": 0, "limit": 5000, "inPOS": true}, {"name": "КНК зарплатникам без ФЗ, ТП от 9 999", "rate": 0.01, "fixed": 0, "limit": 5000, "inPOS": false}, {"name": "КНК стабильный через FIS без ФЗ, ТП от 9 999", "rate": 0.015, "fixed": 0, "limit": 5000, "inPOS": false}, {"name": "ДКПЗН", "rate": 0, "fixed": 2000, "limit": 0, "inPOS": false}, {"name": "Автокредит / ДКПЗА через ЛИД", "rate": 0, "fixed": 1250, "limit": 0, "inPOS": false}, {"name": "ДК МКК Быстрые покупки без ФЗ", "rate": 0, "fixed": 1000, "limit": 0, "inPOS": false}, {"name": "ДК МКК Быстрые покупки с ФЗ", "rate": 0, "fixed": 1500, "limit": 0, "inPOS": true}];
-const STORAGE_KEY = "premiumCalculatorStableV530";
+const STORAGE_KEY = "premiumCalculatorV5";
 
 const defaultState = {
   pos:[
@@ -242,44 +242,11 @@ const defaultState = {
 };
 
 let state = loadData();
-function migrateState(){
-  if(!state || typeof state!=="object") state=JSON.parse(JSON.stringify(defaultState));
-  if(!Array.isArray(state.pos) || !state.pos.length) state.pos=JSON.parse(JSON.stringify(defaultState.pos));
-  state.pos.forEach(r=>{
-    if(typeof r.externalBank==="undefined") r.externalBank=false;
-    if(r.externalBank){r.fz=false;r.vis=false;r.ctk=false;r.complex=false;}
-  });
-  if(!Array.isArray(state.products) || !state.products.length) state.products=JSON.parse(JSON.stringify(PRODUCT_DEFAULTS));
-  if(!Array.isArray(state.dk)) state.dk=[];
-  if(!state.kpi) state.kpi={};
-  const defaults=defaultState.kpi||{};
-  Object.keys(defaults).forEach(k=>{if(typeof state.kpi[k]==="undefined") state.kpi[k]=defaults[k];});
-}
-migrateState();
 
-function loadData(){
-  const keys=[
-    STORAGE_KEY,
-    "premiumCalculatorV529",
-    "premiumCalculatorV528",
-    "premiumCalculatorV527_clean",
-    "premiumCalculatorV526",
-    "premiumCalculatorV5",
-    "premiumCalculator"
-  ];
-  for(const key of keys){
-    try{
-      const raw=localStorage.getItem(key);
-      if(!raw) continue;
-      const saved=JSON.parse(raw);
-      if(saved && saved.pos && saved.products && saved.kpi) return saved;
-    }catch(e){}
-  }
-  return JSON.parse(JSON.stringify(defaultState));
-}
+function loadData(){try{const raw=localStorage.getItem(STORAGE_KEY);if(raw){const saved=JSON.parse(raw);if(saved&&saved.pos&&saved.products&&saved.kpi)return saved}}catch(e){}return JSON.parse(JSON.stringify(defaultState))}
 function saveData(){readKPI();localStorage.setItem(STORAGE_KEY,JSON.stringify(state));alert("Сохранено")}
-function saveSilent(){localStorage.setItem(STORAGE_KEY,JSON.stringify(state));localStorage.setItem("premiumCalculatorV5",JSON.stringify(state))}
-function resetData(){state=JSON.parse(JSON.stringify(defaultState));migrateState();saveSilent();renderAll()}
+function saveSilent(){localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}
+function resetData(){state=JSON.parse(JSON.stringify(defaultState));saveSilent();renderAll()}
 function num(v){return Number(v)||0}
 function money(n){return Math.round(n||0).toLocaleString("ru-RU")+" ₽"}
 function pct(n){return isFinite(n)?Math.round(n*100)+"%":"0%"}
@@ -322,54 +289,116 @@ function aggregateStrata(sum){if(sum<=4)return 1;if(sum<8)return 2;if(sum<14)ret
 function coefficient(s){if(s===1)return 1.15;if(s===2)return 1.05;if(s===3||s===4)return 1;if(s===5)return .8;if(s===6)return .7;if(s===7)return .6;if(s===8||s===9)return .3;if(s===10)return .2;return .1}
 
 function calc(){
- const k=state.kpi||{};
- const posRows=Array.isArray(state.pos)?state.pos:[];
- const productRows=Array.isArray(state.products)?state.products:[];
- const dkRows=Array.isArray(state.dk)?state.dk:[];
-
- const posAmount=posRows.reduce((s,r)=>s+num(r.amount),0);
- const ownPOSAmount=posRows.filter(r=>!r.externalBank).reduce((s,r)=>s+num(r.amount),0);
- const posPieces=posRows.filter(r=>num(r.amount)>0).length;
- const posPremium=posRows.reduce((s,r)=>s+calcPOSRow(r).premium,0);
-
- const ctkAmount=posRows.filter(r=>r.ctk&&!r.externalBank).reduce((s,r)=>s+num(r.amount),0);
- const fzAmount=posRows.filter(r=>r.fz&&!r.externalBank).reduce((s,r)=>s+num(r.amount),0);
-
- const productsPremium=productRows.reduce((s,p)=>s+productPremium(p),0);
- const dkPremium=dkRows.reduce((s,r)=>s+calcDKRow(r).premium,0);
- const dkAmount=dkRows.reduce((s,r)=>s+num(r.amount),0);
- const dkPieces=dkRows.filter(r=>num(r.amount)>0).length;
- const dkInPOS=dkRows.reduce((s,r)=>s+calcDKRow(r).inPOSAmount,0);
-
+ const k=state.kpi;
+ const posAmount=state.pos.reduce((s,r)=>s+num(r.amount),0);
+ const ownPOSAmount=state.pos.filter(r=>!r.externalBank).reduce((s,r)=>s+num(r.amount),0);
+ const posPieces=state.pos.filter(r=>num(r.amount)>0).length;
+ const posPremium=state.pos.reduce((s,r)=>s+calcPOSRow(r).premium,0);
+ const ctkAmount=state.pos.filter(r=>r.ctk&&!r.externalBank).reduce((s,r)=>s+num(r.amount),0);
+ const fzAmount=state.pos.filter(r=>r.fz&&!r.externalBank).reduce((s,r)=>s+num(r.amount),0);
+ const productsPremium=state.products.reduce((s,p)=>s+productPremium(p),0);
+ const dkPremium=state.dk.reduce((s,r)=>s+calcDKRow(r).premium,0);
+ const dkAmount=state.dk.reduce((s,r)=>s+num(r.amount),0);
+ const dkPieces=state.dk.filter(r=>num(r.amount)>0).length;
+ const dkInPOS=state.dk.reduce((s,r)=>s+calcDKRow(r).inPOSAmount,0);
  const posKPIAmount=posAmount+dkInPOS;
  const fzBase=ownPOSAmount+dkInPOS;
  const fzPenetration=fzBase>0?(fzAmount+dkInPOS)/fzBase:0;
-
- const krh=num(productRows[0]?.qty)+num(productRows[1]?.qty);
- const startKRH=num(productRows[2]?.qty);
- const subs=[3,4,5,6].reduce((s,i)=>s+num(productRows[i]?.qty),0);
- const debit=[7,8].reduce((s,i)=>s+num(productRows[i]?.qty),0);
- const protection=productRows.filter(p=>p.group==="Пакеты с защитой").reduce((s,p)=>s+num(p.qty),0);
+ const krh=num(state.products[0]?.qty)+num(state.products[1]?.qty);
+ const startKRH=num(state.products[2]?.qty);
+ const subs=[3,4,5,6].reduce((s,i)=>s+num(state.products[i]?.qty),0);
+ const debit=[7,8].reduce((s,i)=>s+num(state.products[i]?.qty),0);
+ const protection=state.products.filter(p=>p.group==="Пакеты с защитой").reduce((s,p)=>s+num(p.qty),0);
  const protectionPercent=dkPieces>0?(protection/dkPieces)*100:0;
-
  const base=posPremium+productsPremium+dkPremium;
- const sPOS=strataDefault(posKPIAmount,num(k.planPOS));
- const sFZ=strataFZ(fzPenetration,num(k.planFZ));
- const sCTK=strataDefault(ctkAmount,num(k.planCTK));
- const sStart=strataDefault(startKRH,num(k.planStart));
+ const sPOS=strataDefault(posKPIAmount,k.planPOS);
+ const sFZ=strataFZ(fzPenetration,fzBase,k.planFZ);
+ const sCTK=strataDefault(ctkAmount,k.planCTK);
+ const sStart=strataDefault(startKRH,k.planStart);
  const mainSum=sPOS+sFZ+sCTK+sStart;
  const mainStrata=aggregateStrata(mainSum);
-
- const temp={posAmount,ownPOSAmount,posPieces,posPremium,posKPIAmount,ctkAmount,fzAmount,fzBase,fzPenetration,productsPremium,dkPremium,dkAmount,dkPieces,dkInPOS,krh,startKRH,subs,debit,protection,protectionPercent,base,sPOS,sFZ,sCTK,sStart,mainSum,mainStrata};
- const chp=typeof chpItems==="function" ? chpItems(temp).reduce((s,x)=>s+num(x.delta),0) : 0;
+ let chp=0;
+ chp+=krh>=k.planKRH?-1:2;
+ if(k.takeRateFact===0)chp+=-0.5;else if(k.takeRateFact>1)chp+=1;
+ chp+=subs>=k.planSubs?-1:1;
+ chp+=posPieces>=k.planPOSPieces?-1:1;
+ chp+=dkPieces>=2?-4:(dkPieces===1?-1:2);
+ chp+=protectionPercent>=k.planProtection?-1:(protectionPercent<80?2:0);
+ chp+=debit>=k.planDebit?-1:(debit===0?1:0);
+ chp+=num(k.fraudFact)*0.5;
+ if(num(k.csiFact))chp+=num(k.csiFact)>=4.67?-0.5:(num(k.csiFact)<4?0.5:0);
  const finalStrata=aggregateStrata(mainSum+chp);
  const coef=coefficient(finalStrata);
- const expert=k.includeExpert && finalStrata<=3 ? 20000 : 0;
+ const expert=k.includeExpert&&finalStrata<=3?20000:0;
  const total=base*coef+expert;
-
- return{...temp,chp,finalStrata,coef,expert,total};
+ return{posAmount,ownPOSAmount,posPieces,posPremium,ctkAmount,fzPenetration,fzBase,productsPremium,dkPremium,dkAmount,dkPieces,posKPIAmount,krh,startKRH,subs,debit,protectionPercent,base,sPOS,sFZ,sCTK,sStart,mainSum,chp,mainStrata,finalStrata,coef,expert,total}
 }
 
+function targetCalc(r){
+ const k=state.kpi,m=num(k.targetPercent)/100||1;
+ const t={
+   posAmount:k.planPOS*m,
+   posPieces:Math.ceil(k.planPOSPieces*m),
+   krh:Math.ceil(k.planKRH*m),
+   startKRH:Math.ceil(k.planStart*m),
+   subs:Math.ceil(k.planSubs*m),
+   debit:Math.ceil(k.planDebit*m),
+   dkPieces:Math.ceil(k.planDKPieces*m),
+   ctkAmount:k.planCTK*m,
+   protection:k.planProtection
+ };
+ const need={
+   posAmount:Math.max(t.posAmount-r.posKPIAmount,0),
+   posPieces:Math.max(t.posPieces-r.posPieces,0),
+   krh:Math.max(t.krh-r.krh,0),
+   startKRH:Math.max(t.startKRH-r.startKRH,0),
+   subs:Math.max(t.subs-r.subs,0),
+   debit:Math.max(t.debit-r.debit,0),
+   dkPieces:Math.max(t.dkPieces-r.dkPieces,0),
+   ctkAmount:Math.max(t.ctkAmount-r.ctkAmount,0)
+ };
+ const avgPOSRate=r.ownPOSAmount>0?r.posPremium/r.ownPOSAmount:0.0389;
+
+ // Для главного прогноза используем такую же логику, как в блоке "Примерная добавка":
+ // без ДК, вкладов, пакетов, мультиполиса и без пересчёта коэффициента/Эксперта.
+ const addPremium=need.posAmount*avgPOSRate+need.krh*100+need.startKRH*500+need.subs*500+need.debit*100;
+
+ // Считаем страту по прогнозу только для условия Эксперта.
+ // Саму примерную добавку не умножаем на новый коэффициент, чтобы она оставалась ориентиром как в Excel.
+ const sPOS=strataDefault(t.posAmount,k.planPOS);
+ const sFZ=strataFZ(r.fzPenetration,fzBase,k.planFZ);
+ const sCTK=strataDefault(t.ctkAmount,k.planCTK);
+ const sStart=strataDefault(t.startKRH,k.planStart);
+ let chp=0;
+ chp+=t.krh>=k.planKRH?-1:2;
+ if(k.takeRateFact===0)chp+=-0.5;else if(k.takeRateFact>1)chp+=1;
+ chp+=t.subs>=k.planSubs?-1:1;
+ chp+=t.posPieces>=k.planPOSPieces?-1:1;
+ chp+=t.dkPieces>=2?-4:(t.dkPieces===1?-1:2);
+ chp+=t.protection>=k.planProtection?-1:(t.protection<80?2:0);
+ chp+=t.debit>=k.planDebit?-1:(t.debit===0?1:0);
+ chp+=num(k.fraudFact)*0.5;
+ if(num(k.csiFact))chp+=num(k.csiFact)>=4.67?-0.5:(num(k.csiFact)<4?0.5:0);
+ const targetFinalStrata=aggregateStrata(sPOS+sFZ+sCTK+sStart+chp);
+
+ const targetExpert=k.includeExpert&&targetFinalStrata<=3?20000:0;
+ const expertDelta=targetExpert-r.expert;
+
+ const total=r.total+addPremium+expertDelta;
+ return{target:t,need,addPremium,targetFinalStrata,targetExpert,expertDelta,total,delta:addPremium+expertDelta};
+}
+
+function infoBar(title,fact,plan,suffix){
+ const ratio=plan>0?fact/plan:0, cls=ratio>=1?"good":ratio>=.8?"warn":"bad";
+ const f=suffix==="₽"?money(fact):Math.round(fact).toLocaleString("ru-RU");
+ const p=suffix==="₽"?money(plan):Math.round(plan).toLocaleString("ru-RU");
+ return `<div class="infobar"><div class="info-top"><span>${title}</span><b>${pct(ratio)}</b></div><div class="bar"><div class="fill ${cls}" style="width:${Math.min(ratio,1)*100}%"></div></div><div class="info-bottom"><span>${f}</span><span>цель ${p}</span></div></div>`
+}
+
+
+function strataLabel(s){ return "страта " + s; }
+function signedValue(v){ return v>0 ? `+${v}` : `${v}`; }
+function correctionClass(v){ return v<0 ? 'ok' : (v>0 ? 'bad' : ''); }
 function chpItems(r){
   const k=state.kpi;
   const items=[];
@@ -573,50 +602,7 @@ function renderIncomeGoal(r,t){
     ? `Чтобы выйти на ${money(g.desired)} на руки, нужно добрать примерно ${money(g.motivationGap)} премии. Ниже — смешанный план по продуктам и планам.`
     : `По текущему расчёту цель ${money(g.desired)} на руки уже закрыта.`;
   setText("incomeAction", msg);
-  try{setHTML("incomeNeedGrid", renderIncomeNeedCards(r,t,g));}catch(e){console.error("incomeNeedGrid",e);setHTML("incomeNeedGrid","");}
-}
-
-
-function renderMainFallback(){
-  try{
-    const r=calc();
-    const k=state.kpi||{};
-    const salary=k.includeSalary ? num(k.salary) : 0;
-    const region=num(k.regionCoef)/100;
-    const north=num(k.northCoef)/100;
-    const tax=num(k.ndflRate)/100;
-    const gross=(salary+r.total)*(1+region+north);
-    const net=gross*(1-tax);
-    const desired=num(k.desiredNet)||120000;
-    const gap=Math.max(0,desired-net);
-
-    setText("totalPremium",money(r.total));
-    setText("formulaText",`${money(r.base)} × ${r.coef.toFixed(2)} + ${money(r.expert)}`);
-    setText("payNetTop",money(net));
-    setText("payNetGoalTop","см. прогноз");
-    setText("incomeGapTop",gap>0?"−"+money(gap):"✓");
-    setClass("incomeGapTop","v "+(gap>0?"bad":"ok"));
-    setText("finalStrata",r.finalStrata);
-    setText("coef",r.coef.toFixed(2));
-    setText("incomeTarget",money(desired));
-    setText("incomeNow",money(net));
-    setText("incomeGap",gap>0?"−"+money(gap):"цель закрыта");
-    setClass("incomeGap","value "+(gap>0?"bad":"ok"));
-    setText("incomeAction",gap>0?`До ${money(desired)} на руки не хватает примерно ${money(gap)}. Заполни POS, продукты и ДК — калькулятор покажет, что добрать.`:"Цель на руки закрыта.");
-    setHTML("needList",`<div class="reco"><div class="dot">1</div><div>Проверь POS сумму и POS штуки</div></div><div class="reco"><div class="dot">2</div><div>Добери ДК / КРХ / подписки по планам</div></div><div class="reco"><div class="dot">3</div><div>Следи за стратой и коэффициентом</div></div>`);
-    setText("paySalaryNow",state.kpi.includeSalary ? money(salary) : "выключен");
-    setText("payMotivationNow",money(r.total));
-    setText("payAddsNow",money((salary+r.total)*(region+north)));
-    setText("payGrossNow",money(gross));
-    setText("payTaxNow","−"+money(gross*tax));
-    setText("payNetNow",money(net));
-    setText("sumPOSPremium",money(r.posPremium));
-    setText("sumProductsPremium",money(r.productsPremium));
-    setText("sumDKPremium",money(r.dkPremium));
-    setText("expertPremium",money(r.expert));
-  }catch(e){
-    console.error("renderMainFallback failed",e);
-  }
+  setHTML("incomeNeedGrid", renderIncomeNeedCards(r,t,g));
 }
 
 function renderMain(){
@@ -691,24 +677,11 @@ function removeDK(i){state.dk.splice(i,1);saveSilent();renderAll()}
 
 function readKPI(){["targetPercent","planPOS","planPOSPieces","planFZ","planCTK","planStart","planKRH","planSubs","planDKPieces","planProtection","planDebit","planDKAmount","takeRateFact","csiFact","fraudFact","salary","desiredNet","regionCoef","northCoef","ndflRate"].forEach(id=>state.kpi[id]=val(id));state.kpi.includeExpert=val("includeExpert");state.kpi.includeSalary=val("includeSalary")}
 function renderKPI(){Object.entries(state.kpi).forEach(([k,v])=>set(k,v));document.querySelectorAll("#view-kpi input, #view-kpi select").forEach(e=>{if(!e.dataset.bound){e.dataset.bound="1";e.addEventListener("input",()=>{readKPI();saveSilent();renderAll()});e.addEventListener("change",()=>{readKPI();saveSilent();renderAll()})}})}
-function renderAll(){
-  try{renderPOS()}catch(e){console.error("renderPOS",e)}
-  try{renderProducts()}catch(e){console.error("renderProducts",e)}
-  try{renderDK()}catch(e){console.error("renderDK",e)}
-  try{renderKPI()}catch(e){console.error("renderKPI",e)}
-  try{renderMain()}catch(e){console.error("renderMain",e);renderMainFallback()}
-  try{renderMainFallback()}catch(e){console.error("renderMainFallback",e)}
-}
+function renderAll(){renderPOS();renderProducts();renderDK();renderKPI();renderMain()}
 function copySummary(){const r=calc(),t=targetCalc(r);const p=payrollEstimate(r.total), pf=payrollEstimate(t.total);const txt=`Премия сейчас: ${money(r.total)}\nПримерно на руки сейчас с окладом: ${money(p.net)}\nЦель: ${state.kpi.targetPercent}%\nПремия при цели: ${money(t.total)}\nПримерно на руки при цели с окладом: ${money(pf.net)}\nЭксперт в прогнозе: ${state.kpi.includeExpert?money(t.targetExpert||0):"выключен"}`;navigator.clipboard?.writeText(txt).then(()=>alert("Итог скопирован")).catch(()=>alert(txt))}
 document.querySelectorAll(".tab").forEach(btn=>btn.addEventListener("click",()=>{readKPI();document.querySelectorAll(".tab").forEach(b=>b.classList.remove("active"));btn.classList.add("active");document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));document.getElementById("view-"+btn.dataset.view).classList.add("active");saveSilent();renderMain();scrollTo({top:0,behavior:"smooth"})}));
 window.addEventListener("beforeunload",()=>{try{readKPI();saveSilent()}catch(e){}});
 renderAll();
-function ensureVisibleTables(){
-  if(document.getElementById("posList") && !document.getElementById("posList").children.length){
-    state=JSON.parse(JSON.stringify(defaultState));migrateState();saveSilent();renderAll();
-  }
-}
-setTimeout(ensureVisibleTables,100);
 </script>
 </body>
 </html>
