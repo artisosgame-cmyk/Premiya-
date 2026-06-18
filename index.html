@@ -57,7 +57,7 @@ details.dashboard-details .details-body{padding:0 17px 17px}
 </head>
 <body>
 <div class="app">
-<header><div><h1>Калькулятор премии</h1><div class="sub">главная — итоговая выплата и фокус</div></div><div class="pill">v5.27</div></header>
+<header><div><h1>Калькулятор премии</h1><div class="sub">главная — итоговая выплата и фокус</div></div><div class="pill">v5.28</div></header>
 <main>
 <div id="view-main" class="view active">
   <div class="hero">
@@ -227,7 +227,7 @@ details.dashboard-details .details-body{padding:0 17px 17px}
 const POS_RATES = {"39%": {"rates": [0.017, 0.009, 0.026, 0.017, 0.031, 0.019, 0.048, 0.021, 0.051, 0.023, 0.055, 0.025]}, "32%": {"rates": [0.017, 0.009, 0.026, 0.017, 0.031, 0.019, 0.048, 0.021, 0.051, 0.023, 0.055, 0.025]}, "29,9%": {"rates": [0.016, 0.008, 0.025, 0.016, 0.03, 0.019, 0.042, 0.021, 0.049, 0.023, 0.053, 0.025]}, "26%": {"rates": [0.012, 0.005, 0.02, 0.01, 0.021, 0.011, 0.033, 0.02, 0.04, 0.021, 0.044, 0.022]}, "25%": {"rates": [0.011, 0.004, 0.019, 0.009, 0.02, 0.01, 0.027, 0.011, 0.035, 0.012, 0.039, 0.013]}, "23%": {"rates": [0.007, 0.002, 0.012, 0.005, 0.018, 0.011, 0.02, 0.011, 0.025, 0.011, 0.03, 0.011]}, "21%": {"rates": [0.005, 0.001, 0.009, 0.0015, 0.01, 0.002, 0.013, 0.005, 0.018, 0.008, 0.02, 0.009]}, "20%": {"rates": [0.005, 0.001, 0.008, 0.0015, 0.009, 0.002, 0.012, 0.005, 0.017, 0.007, 0.019, 0.008]}, "19%": {"rates": [0, 0, 0.004, 0.001, 0.005, 0.0015, 0.01, 0.0045, 0.013, 0.0065, 0.016, 0.0075]}, "18%": {"rates": [0, 0, 0.003, 0.0005, 0.004, 0.001, 0.008, 0.004, 0.01, 0.006, 0.015, 0.007]}, "17%": {"rates": [0, 0, 0.002, 0.0002, 0.003, 0.0005, 0.007, 0.0035, 0.009, 0.0055, 0.014, 0.0065]}, "16%": {"rates": [0, 0, 0.001, 0.0001, 0.002, 0.0005, 0.006, 0.003, 0.008, 0.005, 0.013, 0.006]}};
 const PRODUCT_DEFAULTS = [{"group": "Карты Халва", "name": "КРХ с лимитом", "qty": 7, "rate": 100}, {"group": "Карты Халва", "name": "КРХ 0.1 с транзакцией", "qty": 0, "rate": 100}, {"group": "Карты Халва", "name": "Старт КРХ / транзакция", "qty": 6, "rate": 500}, {"group": "Подписки", "name": "Халва.Десятка годовая", "qty": 4, "rate": 500}, {"group": "Подписки", "name": "Халва.Десятка ежемесячная / Все и везде", "qty": 0, "rate": 200}, {"group": "Подписки", "name": "Оптима годовая", "qty": 0, "rate": 500}, {"group": "Подписки", "name": "Оптима ежемесячная", "qty": 0, "rate": 300}, {"group": "Дебет / вклады", "name": "Дебетовая карта с % на остаток", "qty": 0, "rate": 250}, {"group": "Дебет / вклады", "name": "Дебетовая карта с кешбеком 2%", "qty": 1, "rate": 100}, {"group": "Дебет / вклады", "name": "Оформление вклада", "qty": 0, "rate": 200}, {"group": "Пакеты с защитой", "name": "FIS пакет 2 / 9 999", "qty": 0, "rate": 700}, {"group": "Пакеты с защитой", "name": "FIS пакет 3 / 14 999", "qty": 0, "rate": 750}, {"group": "Пакеты с защитой", "name": "FIS пакет 4 / 19 999", "qty": 0, "rate": 1000}, {"group": "Пакеты с защитой", "name": "FIS пакет 5 / 29 999", "qty": 0, "rate": 1700}, {"group": "Пакеты с защитой", "name": "Кредит с ФЗ+ТП пакет 1 / 4 999", "qty": 0, "rate": 500}, {"group": "Пакеты с защитой", "name": "Кредит с ФЗ+ТП пакет 2 / 9 999", "qty": 0, "rate": 1000}, {"group": "Пакеты с защитой", "name": "Кредит с ФЗ+ТП пакет 3 / 14 999", "qty": 0, "rate": 1500}, {"group": "Пакеты с защитой", "name": "Кредит с ФЗ+ТП пакет 4 / 19 999", "qty": 0, "rate": 2000}];
 const DK_TYPES = [{"name": "ДК / ДКПЗА через FIS с ФЗ", "rate": 0.015, "fixed": 0, "limit": 5000, "inPOS": true}, {"name": "КНК через ЛИД только с ФЗ", "rate": 0.01, "fixed": 0, "limit": 5000, "inPOS": true}, {"name": "КНК зарплатникам без ФЗ, ТП от 9 999", "rate": 0.01, "fixed": 0, "limit": 5000, "inPOS": false}, {"name": "КНК стабильный через FIS без ФЗ, ТП от 9 999", "rate": 0.015, "fixed": 0, "limit": 5000, "inPOS": false}, {"name": "ДКПЗН", "rate": 0, "fixed": 2000, "limit": 0, "inPOS": false}, {"name": "Автокредит / ДКПЗА через ЛИД", "rate": 0, "fixed": 1250, "limit": 0, "inPOS": false}, {"name": "ДК МКК Быстрые покупки без ФЗ", "rate": 0, "fixed": 1000, "limit": 0, "inPOS": false}, {"name": "ДК МКК Быстрые покупки с ФЗ", "rate": 0, "fixed": 1500, "limit": 0, "inPOS": true}];
-const STORAGE_KEY = "premiumCalculatorV527_clean";
+const STORAGE_KEY = "premiumCalculatorV528";
 
 const defaultState = {
   pos:[
@@ -616,7 +616,50 @@ function renderIncomeGoal(r,t){
     ? `Чтобы выйти на ${money(g.desired)} на руки, нужно добрать примерно ${money(g.motivationGap)} премии. Ниже — смешанный план по продуктам и планам.`
     : `По текущему расчёту цель ${money(g.desired)} на руки уже закрыта.`;
   setText("incomeAction", msg);
-  setHTML("incomeNeedGrid", renderIncomeNeedCards(r,t,g));
+  try{setHTML("incomeNeedGrid", renderIncomeNeedCards(r,t,g));}catch(e){console.error("incomeNeedGrid",e);setHTML("incomeNeedGrid","");}
+}
+
+
+function renderMainFallback(){
+  try{
+    const r=calc();
+    const k=state.kpi||{};
+    const salary=k.includeSalary ? num(k.salary) : 0;
+    const region=num(k.regionCoef)/100;
+    const north=num(k.northCoef)/100;
+    const tax=num(k.ndflRate)/100;
+    const gross=(salary+r.total)*(1+region+north);
+    const net=gross*(1-tax);
+    const desired=num(k.desiredNet)||120000;
+    const gap=Math.max(0,desired-net);
+
+    setText("totalPremium",money(r.total));
+    setText("formulaText",`${money(r.base)} × ${r.coef.toFixed(2)} + ${money(r.expert)}`);
+    setText("payNetTop",money(net));
+    setText("payNetGoalTop","см. прогноз");
+    setText("incomeGapTop",gap>0?"−"+money(gap):"✓");
+    setClass("incomeGapTop","v "+(gap>0?"bad":"ok"));
+    setText("finalStrata",r.finalStrata);
+    setText("coef",r.coef.toFixed(2));
+    setText("incomeTarget",money(desired));
+    setText("incomeNow",money(net));
+    setText("incomeGap",gap>0?"−"+money(gap):"цель закрыта");
+    setClass("incomeGap","value "+(gap>0?"bad":"ok"));
+    setText("incomeAction",gap>0?`До ${money(desired)} на руки не хватает примерно ${money(gap)}. Заполни POS, продукты и ДК — калькулятор покажет, что добрать.`:"Цель на руки закрыта.");
+    setHTML("needList",`<div class="reco"><div class="dot">1</div><div>Проверь POS сумму и POS штуки</div></div><div class="reco"><div class="dot">2</div><div>Добери ДК / КРХ / подписки по планам</div></div><div class="reco"><div class="dot">3</div><div>Следи за стратой и коэффициентом</div></div>`);
+    setText("paySalaryNow",state.kpi.includeSalary ? money(salary) : "выключен");
+    setText("payMotivationNow",money(r.total));
+    setText("payAddsNow",money((salary+r.total)*(region+north)));
+    setText("payGrossNow",money(gross));
+    setText("payTaxNow","−"+money(gross*tax));
+    setText("payNetNow",money(net));
+    setText("sumPOSPremium",money(r.posPremium));
+    setText("sumProductsPremium",money(r.productsPremium));
+    setText("sumDKPremium",money(r.dkPremium));
+    setText("expertPremium",money(r.expert));
+  }catch(e){
+    console.error("renderMainFallback failed",e);
+  }
 }
 
 function renderMain(){
@@ -696,7 +739,8 @@ function renderAll(){
   try{renderProducts()}catch(e){console.error("renderProducts",e)}
   try{renderDK()}catch(e){console.error("renderDK",e)}
   try{renderKPI()}catch(e){console.error("renderKPI",e)}
-  try{renderMain()}catch(e){console.error("renderMain",e)}
+  try{renderMain()}catch(e){console.error("renderMain",e);renderMainFallback()}
+  try{renderMainFallback()}catch(e){console.error("renderMainFallback",e)}
 }
 function copySummary(){const r=calc(),t=targetCalc(r);const p=payrollEstimate(r.total), pf=payrollEstimate(t.total);const txt=`Премия сейчас: ${money(r.total)}\nПримерно на руки сейчас с окладом: ${money(p.net)}\nЦель: ${state.kpi.targetPercent}%\nПремия при цели: ${money(t.total)}\nПримерно на руки при цели с окладом: ${money(pf.net)}\nЭксперт в прогнозе: ${state.kpi.includeExpert?money(t.targetExpert||0):"выключен"}`;navigator.clipboard?.writeText(txt).then(()=>alert("Итог скопирован")).catch(()=>alert(txt))}
 document.querySelectorAll(".tab").forEach(btn=>btn.addEventListener("click",()=>{readKPI();document.querySelectorAll(".tab").forEach(b=>b.classList.remove("active"));btn.classList.add("active");document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));document.getElementById("view-"+btn.dataset.view).classList.add("active");saveSilent();renderMain();scrollTo({top:0,behavior:"smooth"})}));
