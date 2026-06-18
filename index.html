@@ -57,7 +57,7 @@ details.dashboard-details .details-body{padding:0 17px 17px}
 </head>
 <body>
 <div class="app">
-<header><div><h1>Калькулятор премии</h1><div class="sub">главная — итоговая выплата и фокус</div></div><div class="pill">v5.24</div></header>
+<header><div><h1>Калькулятор премии</h1><div class="sub">главная — итоговая выплата и фокус</div></div><div class="pill">v5.25</div></header>
 <main>
 <div id="view-main" class="view active">
   <div class="hero">
@@ -264,7 +264,7 @@ function calcPOSRow(r){
    return{
      premium:0,
      rate:0,
-     formula:`Сторонний банк: ${money(amount)} идёт только в POS сумму и POS штуки, премия 0 ₽`
+     formula:`Сторонний банк: ${money(amount)} идёт только в POS сумму и POS штуки. В премию, ФЗ и средний % POS не входит.`
    };
  }
  const table=POS_RATES[r.rate];
@@ -291,6 +291,7 @@ function coefficient(s){if(s===1)return 1.15;if(s===2)return 1.05;if(s===3||s===
 function calc(){
  const k=state.kpi;
  const posAmount=state.pos.reduce((s,r)=>s+num(r.amount),0);
+ const ownPOSAmount=state.pos.filter(r=>!r.externalBank).reduce((s,r)=>s+num(r.amount),0);
  const posPieces=state.pos.filter(r=>num(r.amount)>0).length;
  const posPremium=state.pos.reduce((s,r)=>s+calcPOSRow(r).premium,0);
  const ctkAmount=state.pos.filter(r=>r.ctk&&!r.externalBank).reduce((s,r)=>s+num(r.amount),0);
@@ -301,7 +302,8 @@ function calc(){
  const dkPieces=state.dk.filter(r=>num(r.amount)>0).length;
  const dkInPOS=state.dk.reduce((s,r)=>s+calcDKRow(r).inPOSAmount,0);
  const posKPIAmount=posAmount+dkInPOS;
- const fzPenetration=posKPIAmount>0?(fzAmount+dkInPOS)/posKPIAmount:0;
+ const fzBase=ownPOSAmount+dkInPOS;
+ const fzPenetration=fzBase>0?(fzAmount+dkInPOS)/fzBase:0;
  const krh=num(state.products[0]?.qty)+num(state.products[1]?.qty);
  const startKRH=num(state.products[2]?.qty);
  const subs=[3,4,5,6].reduce((s,i)=>s+num(state.products[i]?.qty),0);
@@ -310,7 +312,7 @@ function calc(){
  const protectionPercent=dkPieces>0?(protection/dkPieces)*100:0;
  const base=posPremium+productsPremium+dkPremium;
  const sPOS=strataDefault(posKPIAmount,k.planPOS);
- const sFZ=strataFZ(fzPenetration,k.planFZ);
+ const sFZ=strataFZ(fzPenetration,fzBase,k.planFZ);
  const sCTK=strataDefault(ctkAmount,k.planCTK);
  const sStart=strataDefault(startKRH,k.planStart);
  const mainSum=sPOS+sFZ+sCTK+sStart;
@@ -329,7 +331,7 @@ function calc(){
  const coef=coefficient(finalStrata);
  const expert=k.includeExpert&&finalStrata<=3?20000:0;
  const total=base*coef+expert;
- return{posAmount,posPieces,posPremium,ctkAmount,fzPenetration,productsPremium,dkPremium,dkAmount,dkPieces,posKPIAmount,krh,startKRH,subs,debit,protectionPercent,base,sPOS,sFZ,sCTK,sStart,mainSum,chp,mainStrata,finalStrata,coef,expert,total}
+ return{posAmount,ownPOSAmount,posPieces,posPremium,ctkAmount,fzPenetration,fzBase,productsPremium,dkPremium,dkAmount,dkPieces,posKPIAmount,krh,startKRH,subs,debit,protectionPercent,base,sPOS,sFZ,sCTK,sStart,mainSum,chp,mainStrata,finalStrata,coef,expert,total}
 }
 
 function targetCalc(r){
@@ -355,7 +357,7 @@ function targetCalc(r){
    dkPieces:Math.max(t.dkPieces-r.dkPieces,0),
    ctkAmount:Math.max(t.ctkAmount-r.ctkAmount,0)
  };
- const avgPOSRate=r.posAmount>0?r.posPremium/r.posAmount:0.0389;
+ const avgPOSRate=r.ownPOSAmount>0?r.posPremium/r.ownPOSAmount:0.0389;
 
  // Для главного прогноза используем такую же логику, как в блоке "Примерная добавка":
  // без ДК, вкладов, пакетов, мультиполиса и без пересчёта коэффициента/Эксперта.
@@ -364,7 +366,7 @@ function targetCalc(r){
  // Считаем страту по прогнозу только для условия Эксперта.
  // Саму примерную добавку не умножаем на новый коэффициент, чтобы она оставалась ориентиром как в Excel.
  const sPOS=strataDefault(t.posAmount,k.planPOS);
- const sFZ=strataFZ(r.fzPenetration,k.planFZ);
+ const sFZ=strataFZ(r.fzPenetration,fzBase,k.planFZ);
  const sCTK=strataDefault(t.ctkAmount,k.planCTK);
  const sStart=strataDefault(t.startKRH,k.planStart);
  let chp=0;
@@ -415,7 +417,7 @@ function renderMainKpiRows(r,t){
   const k=state.kpi;
   const rows=[
     {name:'POS сумма', fact:money(r.posKPIAmount), target:money(t.target.posAmount), strata:r.sPOS, helper:`план ${money(k.planPOS)}`},
-    {name:'ФЗ проникновение', fact:pct(r.fzPenetration), target:pct(k.planFZ), strata:r.sFZ, helper:'норма не умножается на цель'},
+    {name:'ФЗ проникновение', fact:pct(r.fzPenetration), target:pct(k.planFZ), strata:r.sFZ, helper:'сторонние банки не входят'},
     {name:'ЦТК сумма', fact:money(r.ctkAmount), target:money(t.target.ctkAmount), strata:r.sCTK, helper:`план ${money(k.planCTK)}`},
     {name:'Старт КРХ', fact:String(r.startKRH), target:String(t.target.startKRH), strata:r.sStart, helper:`план ${k.planStart}`},
   ];
@@ -533,7 +535,7 @@ function incomeTargetCalc(r){
   const requiredMotivation=Math.max(desired/multiplier - salary, 0);
   const motivationGap=Math.max(requiredMotivation-r.total, 0);
   const netGap=Math.max(desired-current.net, 0);
-  const avgPOSRate=r.posAmount>0?r.posPremium/r.posAmount:0.0389;
+  const avgPOSRate=r.ownPOSAmount>0?r.posPremium/r.ownPOSAmount:0.0389;
   const posEquivalent=avgPOSRate>0?motivationGap/avgPOSRate:0;
   return{desired,currentNet:current.net,netGap,requiredMotivation,motivationGap,posEquivalent};
 }
@@ -557,7 +559,7 @@ function renderIncomeNeedCards(r,t,g){
   const dkApprox=(t.need.dkPieces||0)*5000;
   const planPremiumApprox=(t.addPremium||0)+dkApprox;
   const afterPlanGap=Math.max(0, moneyGap-planPremiumApprox);
-  const avgPOSRate=r.posAmount>0?r.posPremium/r.posAmount:0.0389;
+  const avgPOSRate=r.ownPOSAmount>0?r.posPremium/r.ownPOSAmount:0.0389;
   const posExtra=avgPOSRate>0?afterPlanGap/avgPOSRate:0;
   const dkExtra=Math.ceil(afterPlanGap/5000);
 
