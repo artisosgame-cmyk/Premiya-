@@ -57,7 +57,7 @@ details.dashboard-details .details-body{padding:0 17px 17px}
 </head>
 <body>
 <div class="app">
-<header><div><h1>Калькулятор премии</h1><div class="sub">главная — итоговая выплата и фокус</div></div><div class="pill">v5.21</div></header>
+<header><div><h1>Калькулятор премии</h1><div class="sub">главная — итоговая выплата и фокус</div></div><div class="pill">v5.22</div></header>
 <main>
 <div id="view-main" class="view active">
   <div class="hero">
@@ -231,10 +231,10 @@ const STORAGE_KEY = "premiumCalculatorV5";
 
 const defaultState = {
   pos:[
-    {date:"2026-06-01",amount:135099,term:24,rate:"29,9%",fz:true,vis:true,ctk:true,complex:true},
-    {date:"2026-06-05",amount:62799,term:24,rate:"29,9%",fz:true,vis:true,ctk:true,complex:false},
-    {date:"2026-06-05",amount:175406,term:24,rate:"26%",fz:true,vis:true,ctk:true,complex:true},
-    {date:"2026-06-09",amount:82697,term:24,rate:"29,9%",fz:true,vis:true,ctk:true,complex:false}
+    {date:"2026-06-01",amount:135099,term:24,rate:"29,9%",fz:true,vis:true,ctk:true,complex:true,externalBank:false},
+    {date:"2026-06-05",amount:62799,term:24,rate:"29,9%",fz:true,vis:true,ctk:true,complex:false,externalBank:false},
+    {date:"2026-06-05",amount:175406,term:24,rate:"26%",fz:true,vis:true,ctk:true,complex:true,externalBank:false},
+    {date:"2026-06-09",amount:82697,term:24,rate:"29,9%",fz:true,vis:true,ctk:true,complex:false,externalBank:false}
   ],
   products: PRODUCT_DEFAULTS,
   dk: [],
@@ -625,11 +625,11 @@ function renderMain(){
 
 function renderPOS(){
  const list=document.getElementById("posList");list.innerHTML="";
- state.pos.forEach((r,i)=>{const c=calcPOSRow(r);const card=document.createElement("div");card.className="card";card.innerHTML=`<div class="card-head"><div><b>POS ${i+1}</b><br><span>Премия: <b>${money(c.premium)}</b></span></div><button class="remove" onclick="removePOS(${i})">Удалить</button></div><div class="form-grid"><div><label>Дата</label><input data-pos="${i}" data-field="date" type="date" value="${r.date||""}"></div><div><label>Сумма, ₽</label><input data-pos="${i}" data-field="amount" type="number" value="${r.amount||""}"></div><div><label>Срок, мес.</label><input data-pos="${i}" data-field="term" type="number" value="${r.term||""}"></div><div><label>Ставка</label><select data-pos="${i}" data-field="rate">${Object.keys(POS_RATES).map(x=>`<option value="${x}" ${x===r.rate?"selected":""}>${x}</option>`).join("")}</select></div></div><div class="switches"><label class="switch">ФЗ <input data-pos="${i}" data-field="fz" type="checkbox" ${r.fz?"checked":""}></label><label class="switch">ВИС <input data-pos="${i}" data-field="vis" type="checkbox" ${r.vis?"checked":""}></label><label class="switch">ЦТК <input data-pos="${i}" data-field="ctk" type="checkbox" ${r.ctk?"checked":""}></label><label class="switch">POS+КРХ <input data-pos="${i}" data-field="complex" type="checkbox" ${r.complex?"checked":""}></label></div><div class="calc-line">${c.formula}</div>`;list.appendChild(card)});
+ state.pos.forEach((r,i)=>{const c=calcPOSRow(r);const card=document.createElement("div");card.className="card";card.innerHTML=`<div class="card-head"><div><b>POS ${i+1}</b><br><span>Премия: <b>${money(c.premium)}</b></span></div><button class="remove" onclick="removePOS(${i})">Удалить</button></div><div class="form-grid"><div><label>Дата</label><input data-pos="${i}" data-field="date" type="date" value="${r.date||""}"></div><div><label>Сумма, ₽</label><input data-pos="${i}" data-field="amount" type="number" value="${r.amount||""}"></div><div><label>Срок, мес.</label><input data-pos="${i}" data-field="term" type="number" value="${r.term||""}"></div><div><label>Ставка</label><select data-pos="${i}" data-field="rate">${Object.keys(POS_RATES).map(x=>`<option value="${x}" ${x===r.rate?"selected":""}>${x}</option>`).join("")}</select></div></div><div class="switches"><label class="switch">Сторонний банк <input data-pos="${i}" data-field="externalBank" type="checkbox" ${r.externalBank?"checked":""}></label><label class="switch">ФЗ <input data-pos="${i}" data-field="fz" type="checkbox" ${r.fz&&!r.externalBank?"checked":""} ${r.externalBank?"disabled":""}></label><label class="switch">ВИС <input data-pos="${i}" data-field="vis" type="checkbox" ${r.vis&&!r.externalBank?"checked":""} ${r.externalBank?"disabled":""}></label><label class="switch">ЦТК <input data-pos="${i}" data-field="ctk" type="checkbox" ${r.ctk&&!r.externalBank?"checked":""} ${r.externalBank?"disabled":""}></label><label class="switch">POS+КРХ <input data-pos="${i}" data-field="complex" type="checkbox" ${r.complex&&!r.externalBank?"checked":""} ${r.externalBank?"disabled":""}></label></div><div class="calc-line">${c.formula}</div>`;list.appendChild(card)});
  list.querySelectorAll("input,select").forEach(e=>{e.addEventListener("input",onPOSInput);e.addEventListener("change",onPOSInput)})
 }
 function onPOSInput(e){const i=Number(e.target.dataset.pos),f=e.target.dataset.field;if(e.target.type==="checkbox")state.pos[i][f]=e.target.checked;else if(f==="amount"||f==="term")state.pos[i][f]=num(e.target.value);else state.pos[i][f]=e.target.value;saveSilent();renderAll()}
-function addPOS(){state.pos.push({date:new Date().toISOString().slice(0,10),amount:0,term:24,rate:"29,9%",fz:true,vis:true,ctk:true,complex:false});saveSilent();renderAll()}
+function addPOS(){state.pos.push({date:new Date().toISOString().slice(0,10),amount:0,term:24,rate:"29,9%",fz:true,vis:true,ctk:true,complex:false,externalBank:false});saveSilent();renderAll()}
 function removePOS(i){state.pos.splice(i,1);saveSilent();renderAll()}
 
 function renderProducts(){const list=document.getElementById("productList");list.innerHTML="";let cur="";state.products.forEach((p,i)=>{if(p.group!==cur){cur=p.group;const h=document.createElement("div");h.className="group-title";h.textContent=cur;list.appendChild(h)}const row=document.createElement("div");row.className="prod-row";row.innerHTML=`<div><div class="prod-title">${p.name}</div><div class="prod-sub">${money(p.rate)} за шт.</div></div><div class="qty-stepper"><button type="button" data-minus="${i}">−</button><input data-prod="${i}" type="number" min="0" step="1" value="${num(p.qty)}"><button type="button" data-plus="${i}">+</button></div><div class="prod-premium">${money(productPremium(p))}</div>`;list.appendChild(row)});list.querySelectorAll("input[data-prod]").forEach(e=>e.addEventListener("input",ev=>{const i=Number(ev.target.dataset.prod);state.products[i].qty=Math.max(0,Math.round(num(ev.target.value)));saveSilent();renderAll()}));list.querySelectorAll("button[data-plus]").forEach(e=>e.addEventListener("click",ev=>adjustProductQty(Number(ev.target.dataset.plus),1)));list.querySelectorAll("button[data-minus]").forEach(e=>e.addEventListener("click",ev=>adjustProductQty(Number(ev.target.dataset.minus),-1)))}
