@@ -57,7 +57,7 @@ details.dashboard-details .details-body{padding:0 17px 17px}
 </head>
 <body>
 <div class="app">
-<header><div><h1>Калькулятор премии</h1><div class="sub">главная — итог, цель и фокус</div></div><div class="pill">v5.15</div></header>
+<header><div><h1>Калькулятор премии</h1><div class="sub">главная — итоговая выплата и фокус</div></div><div class="pill">v5.16</div></header>
 <main>
 <div id="view-main" class="view active">
   <div class="hero">
@@ -71,7 +71,7 @@ details.dashboard-details .details-body{padding:0 17px 17px}
     <div class="mini-card"><div class="k">Добавка</div><div class="v ok" id="targetDelta">0 ₽</div></div>
     <div class="mini-card"><div class="k">Страта / коэф.</div><div class="v"><span id="finalStrata">—</span> / <span id="coef">—</span></div></div>
     <div class="mini-card"><div class="k">Цель</div><div class="v" id="targetBadge">—</div></div>
-    <div class="mini-card"><div class="k">До желаемой суммы</div><div class="v" id="incomeGapTop">—</div></div>
+    <div class="mini-card"><div class="k">До 120 000 на руки</div><div class="v" id="incomeGapTop">—</div></div>
   </div>
 
   <section>
@@ -80,10 +80,11 @@ details.dashboard-details .details-body{padding:0 17px 17px}
   </section>
 
   <section>
-    <div class="section-title"><h2>Цель по выплате</h2><span class="small">на руки</span></div>
-    <div class="row"><div class="name">Хочу получить</div><div class="value" id="incomeTarget">0 ₽</div></div>
-    <div class="row"><div class="name">Примерно сейчас</div><div class="value" id="incomeNow">0 ₽</div></div>
+    <div class="section-title"><h2>Цель по выплате</h2><span class="small">на руки всего</span></div>
+    <div class="row"><div class="name">Хочу получить всего</div><div class="value" id="incomeTarget">0 ₽</div></div>
+    <div class="row"><div class="name">Сейчас на руки с окладом</div><div class="value" id="incomeNow">0 ₽</div></div>
     <div class="row"><div class="name">Не хватает</div><div class="value" id="incomeGap">0 ₽</div></div>
+    <div class="calc-line" id="incomeFormula">Считается: оклад + премия со стратой/коэффициентом + Эксперт + РК + северная − НДФЛ.</div>
     <div class="calc-line" id="incomeAction">Расчёт появится после заполнения данных.</div>
   </section>
 
@@ -162,7 +163,7 @@ details.dashboard-details .details-body{padding:0 17px 17px}
 <div class="form-grid">
   <div><label>Цель прогноза, %</label><input id="targetPercent" type="number"></div>
   <div><label>Оклад, ₽</label><input id="salary" type="number"></div>
-  <div><label>Хочу на руки, ₽</label><input id="desiredNet" type="number"></div>
+  <div><label>Хочу на руки всего, ₽</label><input id="desiredNet" type="number"></div>
   <div><label>Районный коэффициент, %</label><input id="regionCoef" type="number"></div>
   <div><label>Северная надбавка, %</label><input id="northCoef" type="number"></div>
   <div><label>НДФЛ, %</label><input id="ndflRate" type="number"></div>
@@ -507,8 +508,8 @@ function renderIncomeGoal(r){
   setClass("incomeGap", "value "+(g.netGap>0?"bad":"ok"));
   setClass("incomeGapTop", "v "+(g.netGap>0?"bad":"ok"));
   const msg = g.netGap>0
-    ? `Чтобы выйти на ${money(g.desired)}, нужна премия по мотивации около ${money(g.requiredMotivation)}. Сейчас ${money(r.total)}, нужно добрать примерно ${money(g.motivationGap)}. Это ориентир: например около ${money(g.posEquivalent)} POS по средней ставке или комбинация POS + КРХ + подписки + ДК.`
-    : `По текущему расчёту цель ${money(g.desired)} уже закрыта.`;
+    ? `Чтобы получить ${money(g.desired)} на руки всего, нужна итоговая премия по мотивации около ${money(g.requiredMotivation)} уже после страты, коэффициента и Эксперта. Сейчас премия ${money(r.total)}, нужно добрать примерно ${money(g.motivationGap)} премии. Ориентир: около ${money(g.posEquivalent)} POS по средней ставке или комбинация POS + КРХ + подписки + ДК.`
+    : `По текущему расчёту цель ${money(g.desired)} на руки уже закрыта.`;
   setText("incomeAction", msg);
 }
 
