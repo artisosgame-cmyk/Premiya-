@@ -57,7 +57,7 @@ details.dashboard-details .details-body{padding:0 17px 17px}
 </head>
 <body>
 <div class="app">
-<header><div><h1>Калькулятор премии</h1><div class="sub">главная — итоговая выплата и фокус</div></div><div class="pill">v5.32</div></header>
+<header><div><h1>Калькулятор премии</h1><div class="sub">главная — итоговая выплата и фокус</div></div><div class="pill">v5.33</div></header>
 <main>
 <div id="view-main" class="view active">
   <div class="hero">
@@ -80,7 +80,7 @@ details.dashboard-details .details-body{padding:0 17px 17px}
         <div class="amount" id="incomeTarget">0 ₽</div>
       </div>
       <div style="text-align:right">
-        <div class="title">Нужный прогноз</div>
+        <div class="title">Прогноз после страты</div>
         <div class="amount" id="targetBadge">—</div>
       </div>
     </div>
@@ -557,43 +557,77 @@ function incomeTargetCalc(r){
   const posEquivalent=avgPOSRate>0?motivationGap/avgPOSRate:0;
   return{desired,currentNet:current.net,netGap,requiredMotivation,motivationGap,posEquivalent};
 }
-function renderIncomeNeedCards(r,t,g){
+
+function firstStrataTarget(r){
   const k=state.kpi;
+  // Для первой страты в этой модели: KPI должны быть максимально сильные,
+  // а ЧП не должен ухудшать итог. Практичный ориентир — 120% по ключевым KPI и закрытие ЧП.
+  const t120=targetCalc(r,120);
+  const items=[];
+
+  if(t120.need.posAmount>0) items.push({name:'POS сумма', value:'+'+money(t120.need.posAmount), helper:'для сильной KPI страты'});
+  if(t120.need.ctkAmount>0) items.push({name:'ЦТК', value:'+'+money(t120.need.ctkAmount), helper:'для сильной KPI страты'});
+  if(t120.need.startKRH>0) items.push({name:'Старт КРХ', value:'+'+t120.need.startKRH+' шт.', helper:'для KPI'});
+  if(t120.need.posPieces>0) items.push({name:'POS шт.', value:'+'+t120.need.posPieces, helper:'для ЧП'});
+  if(t120.need.dkPieces>0) items.push({name:'ДК', value:'+'+t120.need.dkPieces+' шт.', helper:'сильно улучшает ЧП'});
+  if(t120.need.krh>0) items.push({name:'КРХ', value:'+'+t120.need.krh+' шт.', helper:'для ЧП'});
+  if(t120.need.subs>0) items.push({name:'Подписки', value:'+'+t120.need.subs+' шт.', helper:'для ЧП'});
+  if(t120.need.debit>0) items.push({name:'Дебет', value:'+'+t120.need.debit+' шт.', helper:'для ЧП'});
+  if(r.fzPenetration<k.planFZ) items.push({name:'ФЗ', value:'не ниже '+pct(k.planFZ), helper:'не просаживать KPI'});
+
+  // Отдельно подсвечиваем штрафы ЧП, которые мешают 1 страте.
+  if(r.dkPieces<2) items.unshift({name:'ДК для ЧП', value:'+'+(2-r.dkPieces)+' шт.', helper:'убрать штраф и усилить страту'});
+  if(r.protectionPercent<k.planProtection) items.push({name:'Защита', value:'до '+Math.round(k.planProtection)+'%', helper:'убрать штраф ЧП'});
+  if(r.subs<k.planSubs) items.push({name:'Подписки', value:'+'+(k.planSubs-r.subs)+' шт.', helper:'убрать штраф ЧП'});
+  if(r.debit<k.planDebit) items.push({name:'Дебет', value:'+'+(k.planDebit-r.debit)+' шт.', helper:'убрать штраф ЧП'});
+
+  const projectedNet=payrollEstimate(t120.total).net;
+  return{percent:120,t:t120,items,projectedNet};
+}
+
+function renderIncomeNeedCards(r,t,g){
+  const first=firstStrataTarget(r);
   const auto=findTargetPercentForDesiredNet(r);
   const goalT=auto.t;
-  const moneyGap=Math.max(0, g.motivationGap||0);
 
-  const plan=[];
-  if(goalT.need.posAmount>0) plan.push({name:'POS сумма', value:'+'+money(goalT.need.posAmount), helper:'добрать по сумме'});
-  if(goalT.need.posPieces>0) plan.push({name:'POS шт.', value:'+'+goalT.need.posPieces, helper:'добрать количество'});
-  if(goalT.need.ctkAmount>0) plan.push({name:'ЦТК', value:'+'+money(goalT.need.ctkAmount), helper:'целевые кредиты'});
-  if(goalT.need.dkPieces>0) plan.push({name:'ДК', value:'+'+goalT.need.dkPieces+' шт.', helper:'по плану/ЧП'});
-  if(goalT.need.krh>0) plan.push({name:'КРХ', value:'+'+goalT.need.krh+' шт.', helper:'карты Халва'});
-  if(goalT.need.startKRH>0) plan.push({name:'Старт КРХ', value:'+'+goalT.need.startKRH+' шт.', helper:'активация'});
-  if(goalT.need.subs>0) plan.push({name:'Подписки', value:'+'+goalT.need.subs+' шт.', helper:'до прогноза'});
-  if(goalT.need.debit>0) plan.push({name:'Дебет', value:'+'+goalT.need.debit+' шт.', helper:'дебетовые карты'});
-  if(r.fzPenetration<k.planFZ) plan.push({name:'ФЗ', value:'не ниже '+pct(k.planFZ), helper:'держать норму'});
+  const renderCards = items => items.length
+    ? items.slice(0,8).map(x=>`<div class="mix-card main"><div class="t">${x.name}</div><div class="b">${x.value}</div><div class="s">${x.helper}</div></div>`).join('')
+    : `<div class="mix-card main"><div class="t">1 страта</div><div class="b">почти закрыта</div><div class="s">сильных дыр не найдено</div></div>`;
 
-  if(moneyGap<=0){
-    return `<div class="mix-plan"><div class="mix-block"><div class="mix-title">До ${money(g.desired)}</div><div class="mix-big ok">цель закрыта</div><div class="mix-sub">По текущему расчёту ты уже выходишь на желаемую сумму.</div></div></div>`;
-  }
-
-  const planHtml = plan.length
-    ? plan.slice(0,8).map(x=>`<div class="mix-card main"><div class="t">${x.name}</div><div class="b">${x.value}</div><div class="s">${x.helper}</div></div>`).join('')
-    : `<div class="mix-card main"><div class="t">Планы</div><div class="b">закрыты</div><div class="s">по текущим данным</div></div>`;
+  const goalItems=[];
+  if(goalT.need.posAmount>first.t.need.posAmount) goalItems.push({name:'POS сверху', value:'+'+money(goalT.need.posAmount-first.t.need.posAmount), helper:'после выхода на сильную страту'});
+  if(goalT.need.ctkAmount>first.t.need.ctkAmount) goalItems.push({name:'ЦТК сверху', value:'+'+money(goalT.need.ctkAmount-first.t.need.ctkAmount), helper:'после 1 страты'});
+  if(goalT.need.posPieces>first.t.need.posPieces) goalItems.push({name:'POS шт. сверху', value:'+'+(goalT.need.posPieces-first.t.need.posPieces), helper:'если цель выше 120%'});
+  if(goalT.need.dkPieces>first.t.need.dkPieces) goalItems.push({name:'ДК сверху', value:'+'+(goalT.need.dkPieces-first.t.need.dkPieces)+' шт.', helper:'если цель выше 120%'});
+  if(goalT.need.krh>first.t.need.krh) goalItems.push({name:'КРХ сверху', value:'+'+(goalT.need.krh-first.t.need.krh)+' шт.', helper:'если цель выше 120%'});
+  if(goalT.need.subs>first.t.need.subs) goalItems.push({name:'Подписки сверху', value:'+'+(goalT.need.subs-first.t.need.subs)+' шт.', helper:'если цель выше 120%'});
+  if(goalT.need.debit>first.t.need.debit) goalItems.push({name:'Дебет сверху', value:'+'+(goalT.need.debit-first.t.need.debit)+' шт.', helper:'если цель выше 120%'});
 
   const reachText = auto.reachable
-    ? `По расчёту нужно целиться примерно в ${auto.percent}% по планам.`
-    : `Даже при 200% прогнозе расчёт даёт около ${money(auto.net)} на руки. Цель лучше пересмотреть или добавить другие реальные начисления.`;
+    ? `После сильной страты ориентир до суммы — примерно ${auto.percent}% по планам.`
+    : `Даже при 200% прогнозе расчёт даёт около ${money(auto.net)} на руки. Цель может быть нереалистичной без других начислений.`;
+
+  const secondHtml = goalItems.length
+    ? renderCards(goalItems)
+    : `<div class="mix-card extra"><div class="t">После 1 страты</div><div class="b">${auto.reachable ? 'хватает' : 'нужна доп. цель'}</div><div class="s">${auto.reachable ? 'по расчёту цель закрывается' : 'одними планами до 200% может не хватить'}</div></div>`;
 
   return `<div class="mix-plan">
     <div class="mix-block">
-      <div class="mix-title">Чтобы выйти на ${money(g.desired)} на руки</div>
-      <div class="mix-big">${auto.reachable ? 'цель ≈ '+auto.percent+'%' : 'цель выше 200%'}</div>
-      <div class="mix-sub">${reachText} Не считаю цель одним продуктом: план строится через разные показатели.</div>
+      <div class="mix-title">Логика цели</div>
+      <div class="mix-big">сначала 1 страта</div>
+      <div class="mix-sub">Премия зависит от коэффициента. Поэтому сначала закрываем то, что даёт сильную страту, а уже потом добираем сумму на руки.</div>
     </div>
-    <div class="mix-title">Что добрать по продуктам</div>
-    <div class="mix-grid">${planHtml}</div>
+
+    <div class="mix-title">1. Что сделать для 1 страты / сильной зоны</div>
+    <div class="mix-grid">${renderCards(first.items)}</div>
+
+    <div class="mix-title">2. Потом добрать до ${money(g.desired)} на руки</div>
+    <div class="mix-block">
+      <div class="mix-title">Прогноз после страты</div>
+      <div class="mix-big">${auto.reachable ? '≈ '+auto.percent+'%' : 'выше 200%'}</div>
+      <div class="mix-sub">${reachText}</div>
+    </div>
+    <div class="mix-grid">${secondHtml}</div>
   </div>`;
 }
 
@@ -608,8 +642,8 @@ function renderIncomeGoal(r,t){
   const auto=findTargetPercentForDesiredNet(r);
   const msg = g.netGap>0
     ? (auto.reachable
-      ? `Чтобы выйти на ${money(g.desired)} на руки, ориентир по прогнозу — около ${auto.percent}%. Ниже — что добрать по продуктам.`
-      : `Цель ${money(g.desired)} выше реалистичного прогноза до 200%. Ниже показан максимум по планам, без абсурдных вариантов одним продуктом.`)
+      ? `Сначала добей показатели для сильной страты, потом ориентир до суммы — около ${auto.percent}%.`
+      : `Сначала добей сильную страту. Но цель ${money(g.desired)} может быть выше реалистичного прогноза до 200%.`)
     : `По текущему расчёту цель ${money(g.desired)} на руки уже закрыта.`;
   setText("incomeAction", msg);
   setHTML("incomeNeedGrid", renderIncomeNeedCards(r,t,g));
