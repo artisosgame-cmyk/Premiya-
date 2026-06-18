@@ -57,7 +57,7 @@ details.dashboard-details .details-body{padding:0 17px 17px}
 </head>
 <body>
 <div class="app">
-<header><div><h1>Калькулятор премии</h1><div class="sub">главная — короткий итог, детали раскрываются</div></div><div class="pill">v5.12</div></header>
+<header><div><h1>Калькулятор премии</h1><div class="sub">главная — короткий итог, детали раскрываются</div></div><div class="pill">v5.14</div></header>
 <main>
 <div id="view-main" class="view active">
   <div class="hero">
@@ -85,6 +85,19 @@ details.dashboard-details .details-body{padding:0 17px 17px}
       <div class="row"><div class="name">+ продажи</div><div class="value" id="salesAdd">0 ₽</div></div>
       <div class="row"><div class="name">+ Эксперт</div><div class="value" id="targetExpert">0 ₽</div></div>
       <div class="calc-line" id="targetComment">Цель меняется во вкладке “Планы”.</div>
+    </div>
+  </details>
+
+  <details class="dashboard-details">
+    <summary>К выплате с окладом</summary>
+    <div class="details-body">
+      <div class="row"><div class="name">Оклад</div><div class="value" id="paySalaryNow">0 ₽</div></div>
+      <div class="row"><div class="name">Премия по мотивации</div><div class="value" id="payMotivationNow">0 ₽</div></div>
+      <div class="row"><div class="name">РК + северная</div><div class="value" id="payAddsNow">0 ₽</div></div>
+      <div class="row"><div class="name">Начислено до НДФЛ</div><div class="value" id="payGrossNow">0 ₽</div></div>
+      <div class="row"><div class="name">НДФЛ</div><div class="value" id="payTaxNow">0 ₽</div></div>
+      <div class="row"><div class="name"><b>Примерно на руки</b></div><div class="value" id="payNetNow">0 ₽</div></div>
+      <div class="calc-line" id="payrollComment">Расчёт примерный: без аванса, отпускных, больничных, удержаний и разовых выплат.</div>
     </div>
   </details>
 
@@ -139,7 +152,12 @@ details.dashboard-details .details-body{padding:0 17px 17px}
 <div class="section-title"><h2>Прогноз</h2><span class="small">общие настройки</span></div>
 <div class="form-grid">
   <div><label>Цель прогноза, %</label><input id="targetPercent" type="number"></div>
-  <div class="switch"><span>Учитывать Эксперт 20 000 ₽</span><input id="includeExpert" type="checkbox"></div>
+  <div><label>Оклад, ₽</label><input id="salary" type="number"></div>
+  <div><label>Районный коэффициент, %</label><input id="regionCoef" type="number"></div>
+  <div><label>Северная надбавка, %</label><input id="northCoef" type="number"></div>
+  <div><label>НДФЛ, %</label><input id="ndflRate" type="number"></div>
+  <div class="full switch"><span>Учитывать оклад</span><input id="includeSalary" type="checkbox"></div>
+  <div class="full switch"><span>Учитывать Эксперт 20 000 ₽</span><input id="includeExpert" type="checkbox"></div>
 </div>
 </section>
 
@@ -195,7 +213,7 @@ const defaultState = {
   ],
   products: PRODUCT_DEFAULTS,
   dk: [],
-  kpi:{targetPercent:120,planPOS:550000,planPOSPieces:7,planFZ:0.8,planCTK:385000,planStart:7,planKRH:9,planSubs:7,planDKPieces:2,planProtection:90,planDebit:3,planDKAmount:400000,takeRateFact:0,csiFact:0,fraudFact:0,includeExpert:true}
+  kpi:{targetPercent:120,planPOS:550000,planPOSPieces:7,planFZ:0.8,planCTK:385000,planStart:7,planKRH:9,planSubs:7,planDKPieces:2,planProtection:90,planDebit:3,planDKAmount:400000,takeRateFact:0,csiFact:0,fraudFact:0,salary:26250,includeSalary:true,regionCoef:60,northCoef:50,ndflRate:13,includeExpert:true}
 };
 
 let state = loadData();
@@ -427,6 +445,32 @@ function renderApproxAddTable(r,t){
   `;
 }
 
+
+function payrollEstimate(amount){
+  const k=state.kpi;
+  const salary=k.includeSalary ? num(k.salary) : 0;
+  const base=salary+amount;
+  const region=num(k.regionCoef)/100;
+  const north=num(k.northCoef)/100;
+  const taxRate=num(k.ndflRate)/100;
+  const adds=base*(region+north);
+  const gross=base+adds;
+  const tax=gross*taxRate;
+  const net=gross-tax;
+  return{salary,amount,base,adds,gross,tax,net};
+}
+function renderPayroll(r,t){
+  const now=payrollEstimate(r.total);
+  const forecast=payrollEstimate(t.total);
+  setText("paySalaryNow", state.kpi.includeSalary ? money(now.salary) : "выключен");
+  setText("payMotivationNow", money(now.amount));
+  setText("payAddsNow", money(now.adds));
+  setText("payGrossNow", money(now.gross));
+  setText("payTaxNow", "−"+money(now.tax));
+  setText("payNetNow", money(now.net));
+  setText("payrollComment", `При цели: примерно на руки ${money(forecast.net)}. Оклад ${state.kpi.includeSalary ? money(state.kpi.salary) : "выключен"}, РК ${state.kpi.regionCoef}% + северная ${state.kpi.northCoef}%, НДФЛ ${state.kpi.ndflRate}%.`);
+}
+
 function renderMain(){
  const r=calc(), t=targetCalc(r), k=state.kpi;
  setText("totalPremium",money(r.total));
@@ -465,6 +509,7 @@ function renderMain(){
  setText("sumProductsPremium",money(r.productsPremium));
  setText("sumDKPremium",money(r.dkPremium));
  setText("expertPremium",money(r.expert));
+ renderPayroll(r,t);
 }
 
 function renderPOS(){
@@ -483,10 +528,10 @@ function onDKInput(e){const i=Number(e.target.dataset.dk),f=e.target.dataset.fie
 function addDK(){state.dk.push({date:new Date().toISOString().slice(0,10),type:DK_TYPES[0].name,amount:0});saveSilent();renderAll()}
 function removeDK(i){state.dk.splice(i,1);saveSilent();renderAll()}
 
-function readKPI(){["targetPercent","planPOS","planPOSPieces","planFZ","planCTK","planStart","planKRH","planSubs","planDKPieces","planProtection","planDebit","planDKAmount","takeRateFact","csiFact","fraudFact"].forEach(id=>state.kpi[id]=val(id));state.kpi.includeExpert=val("includeExpert")}
+function readKPI(){["targetPercent","planPOS","planPOSPieces","planFZ","planCTK","planStart","planKRH","planSubs","planDKPieces","planProtection","planDebit","planDKAmount","takeRateFact","csiFact","fraudFact","salary","regionCoef","northCoef","ndflRate"].forEach(id=>state.kpi[id]=val(id));state.kpi.includeExpert=val("includeExpert");state.kpi.includeSalary=val("includeSalary")}
 function renderKPI(){Object.entries(state.kpi).forEach(([k,v])=>set(k,v));document.querySelectorAll("#view-kpi input, #view-kpi select").forEach(e=>{if(!e.dataset.bound){e.dataset.bound="1";e.addEventListener("input",()=>{readKPI();saveSilent();renderAll()});e.addEventListener("change",()=>{readKPI();saveSilent();renderAll()})}})}
 function renderAll(){renderPOS();renderProducts();renderDK();renderKPI();renderMain()}
-function copySummary(){const r=calc(),t=targetCalc(r);const txt=`Премия сейчас: ${money(r.total)}\nЦель: ${state.kpi.targetPercent}%\nПремия при цели: ${money(t.total)}\nДобавка: ${money(t.delta)}\nЭксперт в прогнозе: ${state.kpi.includeExpert?money(t.targetExpert||0):"выключен"}`;navigator.clipboard?.writeText(txt).then(()=>alert("Итог скопирован")).catch(()=>alert(txt))}
+function copySummary(){const r=calc(),t=targetCalc(r);const p=payrollEstimate(r.total), pf=payrollEstimate(t.total);const txt=`Премия сейчас: ${money(r.total)}\nПримерно на руки сейчас с окладом: ${money(p.net)}\nЦель: ${state.kpi.targetPercent}%\nПремия при цели: ${money(t.total)}\nПримерно на руки при цели с окладом: ${money(pf.net)}\nЭксперт в прогнозе: ${state.kpi.includeExpert?money(t.targetExpert||0):"выключен"}`;navigator.clipboard?.writeText(txt).then(()=>alert("Итог скопирован")).catch(()=>alert(txt))}
 document.querySelectorAll(".tab").forEach(btn=>btn.addEventListener("click",()=>{readKPI();document.querySelectorAll(".tab").forEach(b=>b.classList.remove("active"));btn.classList.add("active");document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));document.getElementById("view-"+btn.dataset.view).classList.add("active");saveSilent();renderMain();scrollTo({top:0,behavior:"smooth"})}));
 window.addEventListener("beforeunload",()=>{try{readKPI();saveSilent()}catch(e){}});
 renderAll();
