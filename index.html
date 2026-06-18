@@ -48,7 +48,7 @@ details.dashboard-details .details-body{padding:0 17px 17px}
 .mini-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
 .mini-card{background:#fff;border:1px solid var(--line);border-radius:21px;padding:14px;box-shadow:0 9px 24px rgba(38,31,21,.055)}
 .mini-card .k{font-size:12px;color:var(--muted);margin-bottom:5px}
-.mini-card .v{font-size:22px;font-weight:850}
+.mini-card .v{font-size:22px;font-weight:850}.mini-grid.compact{grid-template-columns:1fr 1fr}.goal-strip{background:#fff;border:1px solid var(--line);border-radius:22px;padding:14px;box-shadow:0 9px 24px rgba(38,31,21,.055);margin:12px 0}.goal-strip .top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.goal-strip .title{font-size:12px;color:var(--muted)}.goal-strip .amount{font-size:24px;font-weight:850}.goal-strip .sub{font-size:12px;color:var(--muted);margin-top:6px}.stack-gap{display:grid;gap:12px}.subsection-title{font-size:13px;font-weight:800;color:#6f675c;margin:10px 0 6px}.soft-line{height:1px;background:var(--line);margin:12px 0}
 
 .reco{display:flex;gap:10px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--line)}.reco:first-child{border-top:0}.dot{width:22px;height:22px;min-width:22px;border-radius:50%;background:#efe2c0;color:#6b4e07;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:850}.footer{font-size:12px;color:var(--muted);line-height:1.45;text-align:center;margin:18px 7px}
 .ok{color:var(--good)}.warn{color:var(--warn)}.bad{color:var(--bad)}
@@ -57,90 +57,103 @@ details.dashboard-details .details-body{padding:0 17px 17px}
 </head>
 <body>
 <div class="app">
-<header><div><h1>Калькулятор премии</h1><div class="sub">главная — итоговая выплата и фокус</div></div><div class="pill">v5.16</div></header>
+<header><div><h1>Калькулятор премии</h1><div class="sub">главная — итоговая выплата и фокус</div></div><div class="pill">v5.17</div></header>
 <main>
 <div id="view-main" class="view active">
   <div class="hero">
-    <div class="label">Итоговая премия сейчас</div>
+    <div class="label">Премия по мотивации сейчас</div>
     <div class="money" id="totalPremium">0 ₽</div>
-    <div class="note" id="formulaText">короткий итог без перегруза</div>
+    <div class="note" id="formulaText">все расчёты связаны между собой: премия → выплата → цель</div>
   </div>
 
-  <div class="mini-grid">
-    <div class="mini-card"><div class="k">Примерно при цели</div><div class="v" id="targetPremium">0 ₽</div></div>
-    <div class="mini-card"><div class="k">Добавка</div><div class="v ok" id="targetDelta">0 ₽</div></div>
-    <div class="mini-card"><div class="k">Страта / коэф.</div><div class="v"><span id="finalStrata">—</span> / <span id="coef">—</span></div></div>
-    <div class="mini-card"><div class="k">Цель</div><div class="v" id="targetBadge">—</div></div>
+  <div class="mini-grid compact">
+    <div class="mini-card"><div class="k">На руки сейчас</div><div class="v" id="payNetTop">0 ₽</div></div>
+    <div class="mini-card"><div class="k">На руки при цели</div><div class="v" id="payNetGoalTop">0 ₽</div></div>
     <div class="mini-card"><div class="k">До 120 000 на руки</div><div class="v" id="incomeGapTop">—</div></div>
+    <div class="mini-card"><div class="k">Страта / коэф.</div><div class="v"><span id="finalStrata">—</span> / <span id="coef">—</span></div></div>
+  </div>
+
+  <div class="goal-strip">
+    <div class="top">
+      <div>
+        <div class="title">Цель по выплате</div>
+        <div class="amount" id="incomeTarget">0 ₽</div>
+      </div>
+      <div style="text-align:right">
+        <div class="title">Цель прогноза</div>
+        <div class="amount" id="targetBadge">—</div>
+      </div>
+    </div>
+    <div class="sub" id="incomeAction">Чтобы выйти на цель, заполни планы и продажи.</div>
   </div>
 
   <section>
-    <div class="section-title"><h2>Фокус на сегодня</h2><span class="small">топ-3</span></div>
+    <div class="section-title"><h2>Что сделать сейчас</h2><span class="small">3 главных шага</span></div>
     <div id="needList"></div>
   </section>
 
-  <section>
-    <div class="section-title"><h2>Цель по выплате</h2><span class="small">на руки всего</span></div>
-    <div class="row"><div class="name">Хочу получить всего</div><div class="value" id="incomeTarget">0 ₽</div></div>
-    <div class="row"><div class="name">Сейчас на руки с окладом</div><div class="value" id="incomeNow">0 ₽</div></div>
-    <div class="row"><div class="name">Не хватает</div><div class="value" id="incomeGap">0 ₽</div></div>
-    <div class="calc-line" id="incomeFormula">Считается: оклад + премия со стратой/коэффициентом + Эксперт + РК + северная − НДФЛ.</div>
-    <div class="calc-line" id="incomeAction">Расчёт появится после заполнения данных.</div>
-  </section>
-
-  <details class="dashboard-details">
-    <summary>Примерный прогноз</summary>
-    <div class="details-body">
-      <div class="row"><div class="name">Сейчас</div><div class="value" id="forecastNowMini">0 ₽</div></div>
-      <div class="row"><div class="name">+ продажи</div><div class="value" id="salesAdd">0 ₽</div></div>
-      <div class="row"><div class="name">+ Эксперт</div><div class="value" id="targetExpert">0 ₽</div></div>
-      <div class="calc-line" id="targetComment">Цель меняется во вкладке “Планы”.</div>
+  <details class="dashboard-details" open>
+    <summary>Цель и выплата</summary>
+    <div class="details-body stack-gap">
+      <div>
+        <div class="row"><div class="name">Сейчас на руки с окладом</div><div class="value" id="incomeNow">0 ₽</div></div>
+        <div class="row"><div class="name">Не хватает до цели</div><div class="value" id="incomeGap">0 ₽</div></div>
+        <div class="calc-line" id="incomeFormula">Считается: оклад + премия со стратой/коэффициентом + Эксперт + РК + северная − НДФЛ.</div>
+      </div>
+      <div class="soft-line"></div>
+      <div>
+        <div class="subsection-title">Прогноз</div>
+        <div class="row"><div class="name">Премия при цели</div><div class="value" id="targetPremium">0 ₽</div></div>
+        <div class="row"><div class="name">Добавка по продажам</div><div class="value" id="salesAdd">0 ₽</div></div>
+        <div class="row"><div class="name">Эксперт</div><div class="value" id="targetExpert">0 ₽</div></div>
+        <div class="calc-line" id="targetComment">Цель меняется во вкладке “Планы”.</div>
+      </div>
+      <div class="soft-line"></div>
+      <div>
+        <div class="subsection-title">К выплате с окладом</div>
+        <div class="row"><div class="name">Оклад</div><div class="value" id="paySalaryNow">0 ₽</div></div>
+        <div class="row"><div class="name">Премия по мотивации</div><div class="value" id="payMotivationNow">0 ₽</div></div>
+        <div class="row"><div class="name">РК + северная</div><div class="value" id="payAddsNow">0 ₽</div></div>
+        <div class="row"><div class="name">Начислено до НДФЛ</div><div class="value" id="payGrossNow">0 ₽</div></div>
+        <div class="row"><div class="name">НДФЛ</div><div class="value" id="payTaxNow">0 ₽</div></div>
+        <div class="row"><div class="name"><b>Примерно на руки</b></div><div class="value" id="payNetNow">0 ₽</div></div>
+        <div class="calc-line" id="payrollComment">Расчёт примерный: без аванса, отпускных, больничных, удержаний и разовых выплат.</div>
+      </div>
     </div>
   </details>
 
   <details class="dashboard-details">
-    <summary>К выплате с окладом</summary>
-    <div class="details-body">
-      <div class="row"><div class="name">Оклад</div><div class="value" id="paySalaryNow">0 ₽</div></div>
-      <div class="row"><div class="name">Премия по мотивации</div><div class="value" id="payMotivationNow">0 ₽</div></div>
-      <div class="row"><div class="name">РК + северная</div><div class="value" id="payAddsNow">0 ₽</div></div>
-      <div class="row"><div class="name">Начислено до НДФЛ</div><div class="value" id="payGrossNow">0 ₽</div></div>
-      <div class="row"><div class="name">НДФЛ</div><div class="value" id="payTaxNow">0 ₽</div></div>
-      <div class="row"><div class="name"><b>Примерно на руки</b></div><div class="value" id="payNetNow">0 ₽</div></div>
-      <div class="calc-line" id="payrollComment">Расчёт примерный: без аванса, отпускных, больничных, удержаний и разовых выплат.</div>
+    <summary>KPI и ЧП</summary>
+    <div class="details-body stack-gap">
+      <div>
+        <div class="subsection-title">Основная карта KPI</div>
+        <div id="mainKpiList"></div>
+        <div class="calc-line" id="mainKpiSummary">Расчёт основной страты.</div>
+      </div>
+      <div class="soft-line"></div>
+      <div>
+        <div class="subsection-title">Чемпионат профессионалов</div>
+        <div id="chpList"></div>
+        <div class="calc-line" id="chpSummary">Корректировка ЧП.</div>
+      </div>
     </div>
   </details>
 
   <details class="dashboard-details">
-    <summary>Основная карта KPI</summary>
-    <div class="details-body">
-      <div id="mainKpiList"></div>
-      <div class="calc-line" id="mainKpiSummary">Расчёт основной страты.</div>
-    </div>
-  </details>
-
-  <details class="dashboard-details">
-    <summary>Чемпионат профессионалов</summary>
-    <div class="details-body">
-      <div id="chpList"></div>
-      <div class="calc-line" id="chpSummary">Корректировка ЧП.</div>
-    </div>
-  </details>
-
-  <details class="dashboard-details">
-    <summary>Примерная добавка</summary>
-    <div class="details-body">
-      <div id="approxAddTable"></div>
-    </div>
-  </details>
-
-  <details class="dashboard-details">
-    <summary>Состав премии</summary>
-    <div class="details-body">
-      <div class="row"><div class="name">POS</div><div class="value" id="sumPOSPremium">0 ₽</div></div>
-      <div class="row"><div class="name">Продукты</div><div class="value" id="sumProductsPremium">0 ₽</div></div>
-      <div class="row"><div class="name">ДК</div><div class="value" id="sumDKPremium">0 ₽</div></div>
-      <div class="row"><div class="name">Эксперт</div><div class="value" id="expertPremium">0 ₽</div></div>
+    <summary>Детали премии</summary>
+    <div class="details-body stack-gap">
+      <div>
+        <div class="subsection-title">Примерная добавка</div>
+        <div id="approxAddTable"></div>
+      </div>
+      <div class="soft-line"></div>
+      <div>
+        <div class="subsection-title">Состав премии</div>
+        <div class="row"><div class="name">POS</div><div class="value" id="sumPOSPremium">0 ₽</div></div>
+        <div class="row"><div class="name">Продукты</div><div class="value" id="sumProductsPremium">0 ₽</div></div>
+        <div class="row"><div class="name">ДК</div><div class="value" id="sumDKPremium">0 ₽</div></div>
+        <div class="row"><div class="name">Эксперт</div><div class="value" id="expertPremium">0 ₽</div></div>
+      </div>
     </div>
   </details>
 </div>
@@ -479,6 +492,8 @@ function renderPayroll(r,t){
   setText("payGrossNow", money(now.gross));
   setText("payTaxNow", "−"+money(now.tax));
   setText("payNetNow", money(now.net));
+  setText("payNetTop", money(now.net));
+  setText("payNetGoalTop", money(forecast.net));
   setText("payrollComment", `При цели: примерно на руки ${money(forecast.net)}. Оклад ${state.kpi.includeSalary ? money(state.kpi.salary) : "выключен"}, РК ${state.kpi.regionCoef}% + северная ${state.kpi.northCoef}%, НДФЛ ${state.kpi.ndflRate}%.`);
 }
 
@@ -508,7 +523,7 @@ function renderIncomeGoal(r){
   setClass("incomeGap", "value "+(g.netGap>0?"bad":"ok"));
   setClass("incomeGapTop", "v "+(g.netGap>0?"bad":"ok"));
   const msg = g.netGap>0
-    ? `Чтобы получить ${money(g.desired)} на руки всего, нужна итоговая премия по мотивации около ${money(g.requiredMotivation)} уже после страты, коэффициента и Эксперта. Сейчас премия ${money(r.total)}, нужно добрать примерно ${money(g.motivationGap)} премии. Ориентир: около ${money(g.posEquivalent)} POS по средней ставке или комбинация POS + КРХ + подписки + ДК.`
+    ? `Чтобы выйти на ${money(g.desired)} на руки всего, нужна итоговая премия по мотивации около ${money(g.requiredMotivation)} уже после страты, коэффициента и Эксперта. Сейчас премия ${money(r.total)}, нужно добрать примерно ${money(g.motivationGap)} премии. Ориентир: около ${money(g.posEquivalent)} POS по средней ставке или комбинация POS + КРХ + подписки + ДК.`
     : `По текущему расчёту цель ${money(g.desired)} на руки уже закрыта.`;
   setText("incomeAction", msg);
 }
