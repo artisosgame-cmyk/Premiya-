@@ -70,7 +70,7 @@ details.dashboard-details .details-body{padding:0 17px 17px}
 </head>
 <body>
 <div class="app">
-<header><div><h1>Калькулятор премии</h1><div class="sub">главная — итоговая выплата и фокус</div></div><div class="pill">v5.35</div></header>
+<header><div><h1>Калькулятор премии</h1><div class="sub">главная — итоговая выплата и фокус</div></div><div class="pill">v5.36</div></header>
 <main>
 <div id="view-main" class="view active">
   <div class="hero">
@@ -93,7 +93,7 @@ details.dashboard-details .details-body{padding:0 17px 17px}
         <div class="amount" id="incomeTarget">0 ₽</div>
       </div>
       <div style="text-align:right">
-        <div class="title">После страты</div>
+        <div class="title">Точный ориентир</div>
         <div class="amount" id="targetBadge">—</div>
       </div>
     </div>
@@ -555,16 +555,40 @@ function findTargetPercentForDesiredNet(r){
   let bestForecast=forecastTotalWithNewCoef(r,bestT);
   let bestNet=payrollEstimate(bestForecast.total).net;
 
-  for(let p=100;p<=200;p+=5){
-    const t=targetCalc(r,p);
+  // Точный расчёт: ищем минимальный процент с шагом 0.1,
+  // а для интерфейса округляем вверх до целого процента.
+  for(let p=100;p<=220;p+=0.1){
+    const precisePercent=Math.round(p*10)/10;
+    const t=targetCalc(r,precisePercent);
     const forecast=forecastTotalWithNewCoef(r,t);
     const net=payrollEstimate(forecast.total).net;
+
     if(net>=desired){
-      return{percent:p,t,net,reachable:true,forecast};
+      const shownPercent=Math.ceil(precisePercent);
+      const shownT=targetCalc(r,shownPercent);
+      const shownForecast=forecastTotalWithNewCoef(r,shownT);
+      const shownNet=payrollEstimate(shownForecast.total).net;
+      return{
+        percent:shownPercent,
+        precisePercent,
+        t:shownT,
+        net:shownNet,
+        reachable:true,
+        forecast:shownForecast
+      };
     }
-    if(net>bestNet){bestPercent=p;bestT=t;bestNet=net;bestForecast=forecast;}
+
+    if(net>bestNet){bestPercent=precisePercent;bestT=t;bestNet=net;bestForecast=forecast;}
   }
-  return{percent:bestPercent,t:bestT,net:bestNet,reachable:false,forecast:bestForecast};
+
+  return{
+    percent:Math.ceil(bestPercent),
+    precisePercent:bestPercent,
+    t:bestT,
+    net:bestNet,
+    reachable:false,
+    forecast:bestForecast
+  };
 }
 
 function incomeTargetCalc(r){
@@ -635,8 +659,8 @@ function renderIncomeNeedCards(r,t,g){
   if(goalT.need.debit>first.t.need.debit) goalItems.push({name:'Дебет сверху', value:'+'+(goalT.need.debit-first.t.need.debit)+' шт.', helper:'если цель выше 120%'});
 
   const secondText = auto.reachable
-    ? `После пересчёта страты и коэффициента ориентир — около ${auto.percent}% по планам.`
-    : `До 200% цель не закрывается. Нужны другие начисления или пересмотр цели.`;
+    ? `После пересчёта страты и коэффициента точный ориентир месяца — ${auto.percent}% по планам.`
+    : `До 220% цель не закрывается. Нужны другие начисления или пересмотр цели.`;
 
   const secondHtml = goalItems.length
     ? renderCards(goalItems)
@@ -652,7 +676,7 @@ function renderIncomeNeedCards(r,t,g){
 
     <div class="goal-step">
       <div class="step-label">Шаг 2</div>
-      <div class="step-main">${auto.reachable ? 'Потом цель ≈ '+auto.percent+'%' : 'Потом цель выше 200%'}</div>
+      <div class="step-main">${auto.reachable ? 'Потом ориентир '+auto.percent+'%' : 'Потом цель выше 200%'}</div>
       <div class="step-sub">${secondText}</div>
     </div>
 
@@ -679,8 +703,8 @@ function renderIncomeGoal(r,t){
   const auto=findTargetPercentForDesiredNet(r);
   const msg = g.netGap>0
     ? (auto.reachable
-      ? `Сначала усиливаем страту, потом ориентир до суммы — около ${auto.percent}%.`
-      : `Сначала усиливаем страту. До 200% цель может не закрыться.`)
+      ? `Сначала усиливаем страту, потом точный ориентир месяца — ${auto.percent}%.`
+      : `Сначала усиливаем страту. До 220% цель может не закрыться.`)
     : `По текущему расчёту цель ${money(g.desired)} на руки уже закрыта.`;
   setText("incomeAction", msg);
   setHTML("incomeNeedGrid", renderIncomeNeedCards(r,t,g));
