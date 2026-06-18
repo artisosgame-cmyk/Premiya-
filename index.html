@@ -70,7 +70,7 @@ details.dashboard-details .details-body{padding:0 17px 17px}
 </head>
 <body>
 <div class="app">
-<header><div><h1>Калькулятор премии</h1><div class="sub">главная — итоговая выплата и фокус</div></div><div class="pill">v5.36</div></header>
+<header><div><h1>Калькулятор премии</h1><div class="sub">главная — итоговая выплата и фокус</div></div><div class="pill">v5.37</div></header>
 <main>
 <div id="view-main" class="view active">
   <div class="hero">
@@ -93,7 +93,7 @@ details.dashboard-details .details-body{padding:0 17px 17px}
         <div class="amount" id="incomeTarget">0 ₽</div>
       </div>
       <div style="text-align:right">
-        <div class="title">Точный ориентир</div>
+        <div class="title">План месяца</div>
         <div class="amount" id="targetBadge">—</div>
       </div>
     </div>
@@ -608,6 +608,51 @@ function incomeTargetCalc(r){
   return{desired,currentNet:current.net,netGap,requiredMotivation,motivationGap,posEquivalent};
 }
 
+
+function monthlyTargetPlan(){
+  const k=state.kpi;
+  const desired=num(k.desiredNet)||120000;
+  const avgPOSRate=0.0389; // стабильный ориентир, чтобы цель месяца не прыгала от каждой выдачи
+  let best={percent:220,net:0,total:0,reachable:false,finalStrata:20,coef:0};
+
+  for(let p=100;p<=220;p+=1){
+    const m=p/100;
+    const posPremium=(num(k.planPOS)*m)*avgPOSRate;
+    const krhPremium=Math.ceil(num(k.planKRH)*m)*100;
+    const startPremium=Math.ceil(num(k.planStart)*m)*500;
+    const subsPremium=Math.ceil(num(k.planSubs)*m)*500;
+    const debitPremium=Math.ceil(num(k.planDebit)*m)*100;
+    const dkPremium=Math.ceil(num(k.planDKPieces)*m)*5000;
+
+    const base=posPremium+krhPremium+startPremium+subsPremium+debitPremium+dkPremium;
+
+    const sPOS=strataDefault(num(k.planPOS)*m,num(k.planPOS));
+    const sFZ=strataFZ(num(k.planFZ),num(k.planFZ)); // ФЗ держим не ниже нормы
+    const sCTK=strataDefault(num(k.planCTK)*m,num(k.planCTK));
+    const sStart=strataDefault(Math.ceil(num(k.planStart)*m),num(k.planStart));
+    let chp=0;
+    chp+=Math.ceil(num(k.planKRH)*m)>=num(k.planKRH)?-1:2;
+    chp+=num(k.takeRateFact)===0?-0.5:(num(k.takeRateFact)>1?1:0);
+    chp+=Math.ceil(num(k.planSubs)*m)>=num(k.planSubs)?-1:1;
+    chp+=Math.ceil(num(k.planPOSPieces)*m)>=num(k.planPOSPieces)?-1:1;
+    chp+=Math.ceil(num(k.planDKPieces)*m)>=2?-4:2;
+    chp+=num(k.planProtection)>=num(k.planProtection)?-1:2;
+    chp+=Math.ceil(num(k.planDebit)*m)>=num(k.planDebit)?-1:1;
+    chp+=num(k.fraudFact)*0.5;
+    if(num(k.csiFact))chp+=num(k.csiFact)>=4.67?-0.5:(num(k.csiFact)<4?0.5:0);
+
+    const finalStrata=aggregateStrata(sPOS+sFZ+sCTK+sStart+chp);
+    const coef=coefficient(finalStrata);
+    const expert=k.includeExpert&&finalStrata<=3?20000:0;
+    const total=base*coef+expert;
+    const net=payrollEstimate(total).net;
+
+    best={percent:p,net,total,reachable:net>=desired,finalStrata,coef};
+    if(net>=desired) return best;
+  }
+  return best;
+}
+
 function firstStrataTarget(r){
   const k=state.kpi;
   // Для первой страты в этой модели: KPI должны быть максимально сильные,
@@ -637,8 +682,8 @@ function firstStrataTarget(r){
 
 function renderIncomeNeedCards(r,t,g){
   const first=firstStrataTarget(r);
-  const auto=findTargetPercentForDesiredNet(r);
-  const goalT=auto.t;
+  const month=monthlyTargetPlan();
+  const fixedT=targetCalc(r,month.percent);
 
   const renderCards = items => items.length
     ? items.slice(0,10).map(x=>`<div class="mix-card main"><div class="t">${x.name}</div><div class="b">${x.value}</div><div class="s">${x.helper}</div></div>`).join('')
@@ -649,44 +694,44 @@ function renderIncomeNeedCards(r,t,g){
     ? `<div class="compact-chips">${topFirst.map(x=>`<span class="compact-chip">${x.name} ${x.value}</span>`).join('')}</div>`
     : `<div class="compact-chips"><span class="compact-chip">крупных дыр нет</span></div>`;
 
-  const goalItems=[];
-  if(goalT.need.posAmount>first.t.need.posAmount) goalItems.push({name:'POS сверху', value:'+'+money(goalT.need.posAmount-first.t.need.posAmount), helper:'после выхода на сильную страту'});
-  if(goalT.need.ctkAmount>first.t.need.ctkAmount) goalItems.push({name:'ЦТК сверху', value:'+'+money(goalT.need.ctkAmount-first.t.need.ctkAmount), helper:'после 1 страты'});
-  if(goalT.need.posPieces>first.t.need.posPieces) goalItems.push({name:'POS шт. сверху', value:'+'+(goalT.need.posPieces-first.t.need.posPieces), helper:'если цель выше 120%'});
-  if(goalT.need.dkPieces>first.t.need.dkPieces) goalItems.push({name:'ДК сверху', value:'+'+(goalT.need.dkPieces-first.t.need.dkPieces)+' шт.', helper:'если цель выше 120%'});
-  if(goalT.need.krh>first.t.need.krh) goalItems.push({name:'КРХ сверху', value:'+'+(goalT.need.krh-first.t.need.krh)+' шт.', helper:'если цель выше 120%'});
-  if(goalT.need.subs>first.t.need.subs) goalItems.push({name:'Подписки сверху', value:'+'+(goalT.need.subs-first.t.need.subs)+' шт.', helper:'если цель выше 120%'});
-  if(goalT.need.debit>first.t.need.debit) goalItems.push({name:'Дебет сверху', value:'+'+(goalT.need.debit-first.t.need.debit)+' шт.', helper:'если цель выше 120%'});
+  const remain=[];
+  if(fixedT.need.posAmount>0) remain.push({name:'POS сумма', value:'+'+money(fixedT.need.posAmount), helper:'остаток до плана месяца'});
+  if(fixedT.need.ctkAmount>0) remain.push({name:'ЦТК', value:'+'+money(fixedT.need.ctkAmount), helper:'остаток до плана месяца'});
+  if(fixedT.need.posPieces>0) remain.push({name:'POS шт.', value:'+'+fixedT.need.posPieces, helper:'остаток'});
+  if(fixedT.need.dkPieces>0) remain.push({name:'ДК', value:'+'+fixedT.need.dkPieces+' шт.', helper:'остаток'});
+  if(fixedT.need.krh>0) remain.push({name:'КРХ', value:'+'+fixedT.need.krh+' шт.', helper:'остаток'});
+  if(fixedT.need.subs>0) remain.push({name:'Подписки', value:'+'+fixedT.need.subs+' шт.', helper:'остаток'});
+  if(fixedT.need.debit>0) remain.push({name:'Дебет', value:'+'+fixedT.need.debit+' шт.', helper:'остаток'});
 
-  const secondText = auto.reachable
-    ? `После пересчёта страты и коэффициента точный ориентир месяца — ${auto.percent}% по планам.`
-    : `До 220% цель не закрывается. Нужны другие начисления или пересмотр цели.`;
+  const remainHtml = remain.length
+    ? renderCards(remain)
+    : `<div class="mix-card extra"><div class="t">План месяца</div><div class="b">закрыт</div><div class="s">по текущим данным</div></div>`;
 
-  const secondHtml = goalItems.length
-    ? renderCards(goalItems)
-    : `<div class="mix-card extra"><div class="t">После сильной страты</div><div class="b">${auto.reachable ? 'хватает' : 'нужна доп. цель'}</div><div class="s">${auto.reachable ? 'по расчёту цель закрывается' : 'одними планами до 200% может не хватить'}</div></div>`;
+  const monthText = month.reachable
+    ? `Это фиксированная цель месяца. Она не должна прыгать после каждой выдачи: меняется только остаток.`
+    : `Даже при 220% расчёт даёт около ${money(month.net)} на руки. Нужны другие начисления или пересмотр цели.`;
 
   return `<div class="goal-steps-compact">
     <div class="goal-step">
-      <div class="step-label">Шаг 1</div>
-      <div class="step-main">Сначала усилить страту</div>
-      <div class="step-sub">Потому что коэффициент напрямую влияет на премию.</div>
-      ${chips}
+      <div class="step-label">Цель месяца</div>
+      <div class="step-main">${month.reachable ? 'держать '+month.percent+'%' : 'выше 220%'}</div>
+      <div class="step-sub">${monthText}</div>
     </div>
 
     <div class="goal-step">
-      <div class="step-label">Шаг 2</div>
-      <div class="step-main">${auto.reachable ? 'Потом ориентир '+auto.percent+'%' : 'Потом цель выше 200%'}</div>
-      <div class="step-sub">${secondText}</div>
+      <div class="step-label">Сначала</div>
+      <div class="step-main">усилить страту</div>
+      <div class="step-sub">Потому что коэффициент влияет на премию.</div>
+      ${chips}
     </div>
 
     <details class="goal-details">
-      <summary>Показать подробный план</summary>
+      <summary>Показать остаток до плана месяца</summary>
       <div class="goal-details-body">
-        <div class="mix-title">Для сильной страты</div>
+        <div class="mix-title">Остаток до ${month.percent}%</div>
+        <div class="mix-grid">${remainHtml}</div>
+        <div class="mix-title" style="margin-top:12px">Что влияет на страту</div>
         <div class="mix-grid">${renderCards(first.items)}</div>
-        <div class="mix-title" style="margin-top:12px">Сверх сильной страты</div>
-        <div class="mix-grid">${secondHtml}</div>
       </div>
     </details>
   </div>`;
@@ -700,23 +745,23 @@ function renderIncomeGoal(r,t){
   setText("incomeGapTop", g.netGap>0 ? "−"+money(g.netGap) : "✓");
   setClass("incomeGap", "value "+(g.netGap>0?"bad":"ok"));
   setClass("incomeGapTop", "v "+(g.netGap>0?"bad":"ok"));
-  const auto=findTargetPercentForDesiredNet(r);
+  const month=monthlyTargetPlan();
   const msg = g.netGap>0
-    ? (auto.reachable
-      ? `Сначала усиливаем страту, потом точный ориентир месяца — ${auto.percent}%.`
-      : `Сначала усиливаем страту. До 220% цель может не закрыться.`)
+    ? (month.reachable
+      ? `План месяца для цели ${money(g.desired)} — держать около ${month.percent}%. После продаж меняется только остаток.`
+      : `Цель ${money(g.desired)} выше расчёта до 220%. Нужны другие начисления или пересмотр цели.`)
     : `По текущему расчёту цель ${money(g.desired)} на руки уже закрыта.`;
   setText("incomeAction", msg);
   setHTML("incomeNeedGrid", renderIncomeNeedCards(r,t,g));
 }
 
 function renderMain(){
- const r=calc(), autoGoal=findTargetPercentForDesiredNet(r), t=autoGoal.t, k=state.kpi, forecast=autoGoal.forecast||forecastTotalWithNewCoef(r,t);
+ const r=calc(), monthGoal=monthlyTargetPlan(), t=targetCalc(r,monthGoal.percent), k=state.kpi, forecast=forecastTotalWithNewCoef(r,t);
  setText("totalPremium",money(r.total));
  setText("formulaText",`${money(r.base)} × ${r.coef.toFixed(2)} + ${money(r.expert)}`);
  setText("finalStrata",r.finalStrata);
  setText("coef",r.coef.toFixed(2));
- setText("targetBadge",autoGoal.reachable ? autoGoal.percent+"%" : "200%+");
+ setText("targetBadge",monthGoal.reachable ? monthGoal.percent+"%" : "220%+");
  setHTML("mainKpiList", renderMainKpiRows(r,t));
  setText("mainKpiSummary", `Сумма страт KPI: ${r.mainSum} → основная страта ${r.mainStrata}`);
  setHTML("chpList", renderChpRows(r));
