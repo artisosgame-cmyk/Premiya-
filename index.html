@@ -189,6 +189,7 @@ details.dashboard-details .details-body{padding:0 17px 17px}
 <div class="section-title"><h2>Прогноз</h2><span class="small">общие настройки</span></div>
 <div class="form-grid">
   <div><label>Прогноз, %</label><input id="targetPercent" type="number"></div>
+  <div><label>Выбранный план месяца, %</label><input id="monthPlanPercent" type="number"></div>
   <div><label>Оклад, ₽</label><input id="salary" type="number"></div>
   <div><label>Хочу на руки всего, ₽</label><input id="desiredNet" type="number"></div>
   <div><label>Районный коэффициент, %</label><input id="regionCoef" type="number"></div>
@@ -251,7 +252,7 @@ const defaultState = {
   ],
   products: PRODUCT_DEFAULTS,
   dk: [],
-  kpi:{targetPercent:120,planPOS:550000,planPOSPieces:7,planFZ:0.8,planCTK:385000,planStart:7,planKRH:9,planSubs:7,planDKPieces:2,planProtection:90,planDebit:3,planDKAmount:400000,takeRateFact:0,csiFact:0,fraudFact:0,salary:26250,desiredNet:120000,includeSalary:true,regionCoef:60,northCoef:50,ndflRate:13,includeExpert:true}
+  kpi:{targetPercent:120,monthPlanPercent:120,planPOS:550000,planPOSPieces:7,planFZ:0.8,planCTK:385000,planStart:7,planKRH:9,planSubs:7,planDKPieces:2,planProtection:90,planDebit:3,planDKAmount:400000,takeRateFact:0,csiFact:0,fraudFact:0,salary:26250,desiredNet:120000,includeSalary:true,regionCoef:60,northCoef:50,ndflRate:13,includeExpert:true}
 };
 
 let state = loadData();
@@ -531,7 +532,7 @@ function renderPayroll(r,t){
   setText("payTaxNow", "−"+money(now.tax));
   setText("payNetNow", money(now.net));
   setText("payNetTop", money(now.net));
-  setText("payNetGoalTop", money(forecast.net));
+  setText("payNetGoalTop", money(monthGoal.net||payrollEstimate(forecast.total).net));
   setText("payrollComment", `При цели: примерно на руки ${money(forecast.net)}. Оклад ${state.kpi.includeSalary ? money(state.kpi.salary) : "выключен"}, РК ${state.kpi.regionCoef}% + северная ${state.kpi.northCoef}%, НДФЛ ${state.kpi.ndflRate}%.`);
 }
 
@@ -609,81 +610,37 @@ function incomeTargetCalc(r){
 }
 
 
-function monthlyTargetPlan(){
-  const k=state.kpi;
-  const desired=num(k.desiredNet)||120000;
 
-  // Фиксированный план месяца НЕ зависит от текущих выдач.
-  // Он меняется только если поменять планы, желаемую сумму, оклад/надбавки/НДФЛ или Эксперт.
-  const avgPOSRate=0.0389;
-  const fzAssumption=Math.max(1, num(k.planFZ)); // считаем, что ФЗ держим на сильном уровне, например 100%
-
-  let best={percent:220,net:0,total:0,reachable:false,finalStrata:20,coef:0};
-
+function neededPercentForDesiredNet(r){
+  const desired=num(state.kpi.desiredNet)||120000;
+  let best={percent:220,net:0,reachable:false,forecast:null,t:null};
   for(let p=100;p<=220;p+=1){
-    const m=p/100;
-
-    const posAmount=num(k.planPOS)*m;
-    const posPieces=Math.ceil(num(k.planPOSPieces)*m);
-    const ctkAmount=num(k.planCTK)*m;
-    const startKRH=Math.ceil(num(k.planStart)*m);
-    const krh=Math.ceil(num(k.planKRH)*m);
-    const subs=Math.ceil(num(k.planSubs)*m);
-    const debit=Math.ceil(num(k.planDebit)*m);
-    const dkPieces=Math.ceil(num(k.planDKPieces)*m);
-
-    const posPremium=posAmount*avgPOSRate;
-    const krhPremium=krh*100;
-    const startPremium=startKRH*500;
-    const subsPremium=subs*500;
-    const debitPremium=debit*100;
-
-    // Более реалистично, чем всегда 5 000 ₽:
-    // считаем среднюю премию ДК от плана суммы ДК и количества ДК.
-    const dkAvgAmount = dkPieces>0 ? (num(k.planDKAmount)*m)/dkPieces : 0;
-    const dkAvgPremium = Math.min(dkAvgAmount*0.015,5000);
-    const dkPremium = dkPieces*dkAvgPremium;
-
-    const base=posPremium+krhPremium+startPremium+subsPremium+debitPremium+dkPremium;
-
-    const sPOS=strataDefault(posAmount,num(k.planPOS));
-    const sFZ=strataFZ(fzAssumption,num(k.planFZ));
-    const sCTK=strataDefault(ctkAmount,num(k.planCTK));
-    const sStart=strataDefault(startKRH,num(k.planStart));
-    const mainSum=sPOS+sFZ+sCTK+sStart;
-
-    let chp=0;
-    chp+=krh>=num(k.planKRH)?-1:2;
-    chp+=num(k.takeRateFact)===0?-0.5:(num(k.takeRateFact)>1?1:0);
-    chp+=subs>=num(k.planSubs)?-1:1;
-    chp+=posPieces>=num(k.planPOSPieces)?-1:1;
-    chp+=dkPieces>=2?-4:(dkPieces===1?-1:2);
-    chp+=num(k.planProtection)>=num(k.planProtection)?-1:2;
-    chp+=debit>=num(k.planDebit)?-1:(debit===0?1:0);
-    chp+=num(k.fraudFact)*0.5;
-    if(num(k.csiFact))chp+=num(k.csiFact)>=4.67?-0.5:(num(k.csiFact)<4?0.5:0);
-
-    const finalStrata=aggregateStrata(mainSum+chp);
-    const coef=coefficient(finalStrata);
-    const expert=k.includeExpert&&finalStrata<=3?20000:0;
-    const total=base*coef+expert;
-    const net=payrollEstimate(total).net;
-
-    best={
-      percent:p,
-      net,
-      total,
-      reachable:net>=desired,
-      finalStrata,
-      coef,
-      base,
-      expert
-    };
-
+    const t=targetCalc(r,p);
+    const forecast=forecastTotalWithNewCoef(r,t);
+    const net=payrollEstimate(forecast.total).net;
+    best={percent:p,net,reachable:net>=desired,forecast,t};
     if(net>=desired) return best;
   }
-
   return best;
+}
+
+function monthlyTargetPlan(){
+  const r=calc();
+  const p=num(state.kpi.monthPlanPercent)||num(state.kpi.targetPercent)||120;
+  const t=targetCalc(r,p);
+  const forecast=forecastTotalWithNewCoef(r,t);
+  const net=payrollEstimate(forecast.total).net;
+  const desired=num(state.kpi.desiredNet)||120000;
+  return{
+    percent:p,
+    net,
+    total:forecast.total,
+    reachable:net>=desired,
+    finalStrata:t.targetFinalStrata,
+    coef:forecast.coef,
+    forecast,
+    t
+  };
 }
 
 function firstStrataTarget(r){
@@ -714,13 +671,14 @@ function firstStrataTarget(r){
 }
 
 function renderIncomeNeedCards(r,t,g){
-  const k=state.kpi;
-
   const first=firstStrataTarget(r);
+  const month=monthlyTargetPlan();
+  const needed=neededPercentForDesiredNet(r);
+  const fixedT=month.t||targetCalc(r,month.percent);
 
   const renderCards = items => items.length
     ? items.slice(0,10).map(x=>`<div class="mix-card main"><div class="t">${x.name}</div><div class="b">${x.value}</div><div class="s">${x.helper}</div></div>`).join('')
-    : `<div class="mix-card main"><div class="t">План месяца</div><div class="b">закрыт</div><div class="s">по текущим данным</div></div>`;
+    : `<div class="mix-card main"><div class="t">План</div><div class="b">закрыт</div><div class="s">по текущим данным</div></div>`;
 
   const topFirst = first.items.slice(0,3);
   const chips = topFirst.length
@@ -728,34 +686,38 @@ function renderIncomeNeedCards(r,t,g){
     : `<div class="compact-chips"><span class="compact-chip">крупных дыр нет</span></div>`;
 
   const remain=[];
-  if(t.need.posAmount>0) remain.push({name:'POS сумма', value:'+'+money(t.need.posAmount), helper:'остаток до '+k.targetPercent+'%'});
-  if(t.need.ctkAmount>0) remain.push({name:'ЦТК', value:'+'+money(t.need.ctkAmount), helper:'остаток до '+k.targetPercent+'%'});
-  if(t.need.posPieces>0) remain.push({name:'POS шт.', value:'+'+t.need.posPieces, helper:'остаток'});
-  if(t.need.dkPieces>0) remain.push({name:'ДК', value:'+'+t.need.dkPieces+' шт.', helper:'остаток'});
-  if(t.need.krh>0) remain.push({name:'КРХ', value:'+'+t.need.krh+' шт.', helper:'остаток'});
-  if(t.need.startKRH>0) remain.push({name:'Старт КРХ', value:'+'+t.need.startKRH+' шт.', helper:'остаток'});
-  if(t.need.subs>0) remain.push({name:'Подписки', value:'+'+t.need.subs+' шт.', helper:'остаток'});
-  if(t.need.debit>0) remain.push({name:'Дебет', value:'+'+t.need.debit+' шт.', helper:'остаток'});
+  if(fixedT.need.posAmount>0) remain.push({name:'POS сумма', value:'+'+money(fixedT.need.posAmount), helper:'остаток до выбранного плана'});
+  if(fixedT.need.ctkAmount>0) remain.push({name:'ЦТК', value:'+'+money(fixedT.need.ctkAmount), helper:'остаток до выбранного плана'});
+  if(fixedT.need.posPieces>0) remain.push({name:'POS шт.', value:'+'+fixedT.need.posPieces, helper:'остаток'});
+  if(fixedT.need.dkPieces>0) remain.push({name:'ДК', value:'+'+fixedT.need.dkPieces+' шт.', helper:'остаток'});
+  if(fixedT.need.krh>0) remain.push({name:'КРХ', value:'+'+fixedT.need.krh+' шт.', helper:'остаток'});
+  if(fixedT.need.subs>0) remain.push({name:'Подписки', value:'+'+fixedT.need.subs+' шт.', helper:'остаток'});
+  if(fixedT.need.debit>0) remain.push({name:'Дебет', value:'+'+fixedT.need.debit+' шт.', helper:'остаток'});
+
+  const remainHtml = renderCards(remain);
+  const enoughText = month.reachable
+    ? `При выбранном плане ${month.percent}% выходит около ${money(month.net)} на руки — цель закрывается.`
+    : `При выбранном плане ${month.percent}% выходит около ${money(month.net)} на руки. Для цели нужно примерно ${needed.reachable ? needed.percent+'%' : 'выше 220%'}.`;
 
   return `<div class="goal-steps-compact">
     <div class="goal-step">
-      <div class="step-label">План месяца</div>
-      <div class="step-main">держать ${k.targetPercent}%</div>
-      <div class="step-sub">Это фиксированная цель из вкладки “Планы”. Она не меняется от новых выдач — меняется только остаток.</div>
+      <div class="step-label">Выбранный план месяца</div>
+      <div class="step-main">держать ${month.percent}%</div>
+      <div class="step-sub">${enoughText}</div>
     </div>
 
     <div class="goal-step">
       <div class="step-label">Сначала</div>
       <div class="step-main">усилить страту</div>
-      <div class="step-sub">Потому что коэффициент влияет на премию.</div>
+      <div class="step-sub">Коэффициент влияет на итоговую премию.</div>
       ${chips}
     </div>
 
     <details class="goal-details">
-      <summary>Показать остаток до плана месяца</summary>
+      <summary>Показать остаток до выбранного плана</summary>
       <div class="goal-details-body">
-        <div class="mix-title">Остаток до ${k.targetPercent}%</div>
-        <div class="mix-grid">${renderCards(remain)}</div>
+        <div class="mix-title">Остаток до ${month.percent}%</div>
+        <div class="mix-grid">${remainHtml}</div>
         <div class="mix-title" style="margin-top:12px">Что влияет на страту</div>
         <div class="mix-grid">${renderCards(first.items)}</div>
       </div>
@@ -771,20 +733,24 @@ function renderIncomeGoal(r,t){
   setText("incomeGapTop", g.netGap>0 ? "−"+money(g.netGap) : "✓");
   setClass("incomeGap", "value "+(g.netGap>0?"bad":"ok"));
   setClass("incomeGapTop", "v "+(g.netGap>0?"bad":"ok"));
+  const month=monthlyTargetPlan();
+  const needed=neededPercentForDesiredNet(r);
   const msg = g.netGap>0
-    ? `План месяца зафиксирован: ${state.kpi.targetPercent}%. После выдач меняется только остаток до этого плана.`
+    ? (month.reachable
+      ? `Выбранный план ${month.percent}% закрывает цель. После выдач меняется только остаток.`
+      : `Выбранный план ${month.percent}% не закрывает цель. Нужный ориентир: ${needed.reachable ? needed.percent+"%" : "выше 220%"}.`)
     : `По текущему расчёту цель ${money(g.desired)} на руки уже закрыта.`;
   setText("incomeAction", msg);
   setHTML("incomeNeedGrid", renderIncomeNeedCards(r,t,g));
 }
 
 function renderMain(){
- const r=calc(), t=targetCalc(r, state.kpi.targetPercent), k=state.kpi, forecast=forecastTotalWithNewCoef(r,t);
+ const r=calc(), monthGoal=monthlyTargetPlan(), t=monthGoal.t||targetCalc(r,monthGoal.percent), k=state.kpi, forecast=monthGoal.forecast||forecastTotalWithNewCoef(r,t);
  setText("totalPremium",money(r.total));
  setText("formulaText",`${money(r.base)} × ${r.coef.toFixed(2)} + ${money(r.expert)}`);
  setText("finalStrata",r.finalStrata);
  setText("coef",r.coef.toFixed(2));
- setText("targetBadge", k.targetPercent+"%");
+ setText("targetBadge",monthGoal.reachable ? monthGoal.percent+"%" : "220%+");
  setHTML("mainKpiList", renderMainKpiRows(r,t));
  setText("mainKpiSummary", `Сумма страт KPI: ${r.mainSum} → основная страта ${r.mainStrata}`);
  setHTML("chpList", renderChpRows(r));
@@ -809,7 +775,7 @@ function renderMain(){
  if(t.need.dkPieces>0) parts.push(`ДК: +${t.need.dkPieces}`);
  if(r.fzPenetration<k.planFZ) parts.push(`ФЗ: до нормы ${pct(k.planFZ-r.fzPenetration)}`);
  const expertNote = k.includeExpert ? `Эксперт ${money(t.targetExpert||0)}` : "Эксперт выключен";
- setText("targetComment", `Фиксированный план месяца: ${k.targetPercent}%. После выдач меняется только остаток до него.`);
+ setText("targetComment", `Выбранный план месяца: ${monthGoal.percent}%. На руки при цели: ${money(monthGoal.net||payrollEstimate(forecast.total).net)}.`);
  setHTML("approxAddTable", renderApproxAddTable(r,t));
  setHTML("needList", parts.length ? parts.slice(0,3).map((x,i)=>`<div class="reco"><div class="dot">${i+1}</div><div>${x}</div></div>`).join("") : `<div class="hint">По текущим значениям цель закрыта. Можно поднять цель прогноза во вкладке “Планы”.</div>`);
  setText("sumPOSPremium",money(r.posPremium));
@@ -848,7 +814,7 @@ function onDKInput(e){const i=Number(e.target.dataset.dk),f=e.target.dataset.fie
 function addDK(){state.dk.push({date:new Date().toISOString().slice(0,10),type:DK_TYPES[0].name,amount:0});saveSilent();renderAll()}
 function removeDK(i){state.dk.splice(i,1);saveSilent();renderAll()}
 
-function readKPI(){["targetPercent","planPOS","planPOSPieces","planFZ","planCTK","planStart","planKRH","planSubs","planDKPieces","planProtection","planDebit","planDKAmount","takeRateFact","csiFact","fraudFact","salary","desiredNet","regionCoef","northCoef","ndflRate"].forEach(id=>state.kpi[id]=val(id));state.kpi.includeExpert=val("includeExpert");state.kpi.includeSalary=val("includeSalary")}
+function readKPI(){["targetPercent","monthPlanPercent","planPOS","planPOSPieces","planFZ","planCTK","planStart","planKRH","planSubs","planDKPieces","planProtection","planDebit","planDKAmount","takeRateFact","csiFact","fraudFact","salary","desiredNet","regionCoef","northCoef","ndflRate"].forEach(id=>state.kpi[id]=val(id));state.kpi.includeExpert=val("includeExpert");state.kpi.includeSalary=val("includeSalary")}
 function renderKPI(){Object.entries(state.kpi).forEach(([k,v])=>set(k,v));document.querySelectorAll("#view-kpi input, #view-kpi select").forEach(e=>{if(!e.dataset.bound){e.dataset.bound="1";e.addEventListener("input",()=>{readKPI();saveSilent();renderAll()});e.addEventListener("change",()=>{readKPI();saveSilent();renderAll()})}})}
 function renderAll(){renderPOS();renderProducts();renderDK();renderKPI();renderMain()}
 function copySummary(){const r=calc(),t=targetCalc(r);const p=payrollEstimate(r.total), pf=payrollEstimate(t.total);const txt=`Премия сейчас: ${money(r.total)}\nПримерно на руки сейчас с окладом: ${money(p.net)}\nЦель: ${state.kpi.targetPercent}%\nПремия при цели: ${money(t.total)}\nПримерно на руки при цели с окладом: ${money(pf.net)}\nЭксперт в прогнозе: ${state.kpi.includeExpert?money(t.targetExpert||0):"выключен"}`;navigator.clipboard?.writeText(txt).then(()=>alert("Итог скопирован")).catch(()=>alert(txt))}
