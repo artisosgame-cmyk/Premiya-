@@ -58,7 +58,21 @@ details.dashboard-details .details-body{padding:0 17px 17px}
 .plan-summary-cell .v{font-size:17px;font-weight:900;margin-top:3px}
 .plan-summary-cell.full{grid-column:1/-1}
 .plan-summary-cell.warn{background:#fff8ec}
-.plan-summary-cell.good{background:#f4fbf6}
+.plan-summary-cell.good{background:#f4fbf6}.money-plan{margin-top:12px;background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px}
+.money-plan .mp-title{font-size:12px;color:var(--muted);font-weight:850}
+.money-plan .mp-big{font-size:22px;font-weight:900;margin-top:4px}
+.money-plan .mp-sub{font-size:12px;color:var(--muted);line-height:1.35;margin-top:5px}
+.money-plan-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.money-option{background:#fbfaf7;border:1px solid var(--line);border-radius:15px;padding:11px}
+.money-option .k{font-size:11px;color:var(--muted)}
+.money-option .v{font-size:16px;font-weight:900;margin-top:3px}
+.money-option .s{font-size:11px;color:var(--muted);margin-top:4px}
+.priority-list{display:grid;gap:8px;margin-top:10px}
+.priority-row{display:flex;gap:9px;align-items:flex-start;background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px}
+.priority-row .num{min-width:24px;height:24px;border-radius:50%;background:#f0e2bd;display:grid;place-items:center;font-weight:900;font-size:12px}
+.priority-row .txt{font-size:13px;font-weight:800}
+.priority-row .sub{font-size:11px;color:var(--muted);margin-top:2px}
+
 
 .goal-details{margin-top:10px;border:1px solid var(--line);border-radius:18px;background:#fff;overflow:hidden}
 .goal-details summary{list-style:none;padding:13px 14px;font-weight:850;cursor:pointer;color:#2b2823}
@@ -77,7 +91,7 @@ details.dashboard-details .details-body{padding:0 17px 17px}
 </head>
 <body>
 <div class="app">
-<header><div><h1>Калькулятор премии</h1><div class="sub">главная — итоговая выплата и фокус</div></div><div class="pill">v5.44</div></header>
+<header><div><h1>Калькулятор премии</h1><div class="sub">главная — итоговая выплата и фокус</div></div><div class="pill">v5.45</div></header>
 <main>
 <div id="view-main" class="view active">
   <div class="hero">
@@ -733,6 +747,8 @@ function renderIncomeNeedCards(r,t,g){
       <div class="step-main">держать ${month.percent}%</div>
       <div class="step-sub">${enoughText}</div>
     </div>
+    ${renderPriorityBlock(r,t,m)}
+    ${renderMoneyTopUpBlock(r,m)}
 
     <div class="goal-step">
       <div class="step-label">Сначала</div>
@@ -742,11 +758,11 @@ function renderIncomeNeedCards(r,t,g){
     </div>
 
     <details class="goal-details">
-      <summary>Показать остаток до KPI плана</summary>
+      <summary>Подробно: остаток до KPI 120%</summary>
       <div class="goal-details-body">
         <div class="mix-title">Остаток до ${month.percent}%</div>
         <div class="mix-grid">${remainHtml}</div>
-        <div class="mix-title" style="margin-top:12px">Что влияет на страту</div>
+        <div class="mix-title" style="margin-top:12px">Детали по страте</div>
         <div class="mix-grid">${renderCards(first.items)}</div>
       </div>
     </details>
@@ -802,7 +818,7 @@ function renderMain(){
 
  const enoughText = m.reachable
    ? `План KPI ${m.percent}% закрывает цель: примерно ${money(m.net)} на руки.`
-   : `План KPI ${m.percent}% даёт ${money(m.net)} на руки. Ниже — что закрыть по ЧП и сколько не хватает до цели.`;
+   : `KPI ${m.percent}% даёт ${money(m.net)} на руки. Ниже — что закрыть по ЧП и чем добить премию до цели.`;
  setText("incomeAction",enoughText);
  setText("targetComment",`KPI план: ${m.percent}%. После выдач меняется только остаток до него.`);
 
@@ -829,6 +845,58 @@ function renderMain(){
  setText("sumDKPremium",money(r.dkPremium));
  setText("expertPremium",money(r.expert));
  renderPayroll(r,{...t,total:m.total});
+}
+
+
+function renderMoneyTopUpBlock(r,m){
+ const desired=num(state.kpi.desiredNet)||120000;
+ const currentNet=payrollEstimate(r.total).net;
+ const gapNet=Math.max(0,desired-currentNet);
+
+ if(gapNet<=0){
+   return `<div class="money-plan"><div class="mp-title">До выплаты</div><div class="mp-big">цель закрыта</div><div class="mp-sub">По текущему расчёту ты уже выходишь на ${money(desired)} на руки.</div></div>`;
+ }
+
+ const region=num(state.kpi.regionCoef)/100;
+ const north=num(state.kpi.northCoef)/100;
+ const tax=num(state.kpi.ndflRate)/100;
+ const netFactor=(1+region+north)*(1-tax);
+ const needMotivation=netFactor>0?gapNet/netFactor:gapNet;
+
+ const avgPOSRate=r.ownPOSAmount>0?r.posPremium/r.ownPOSAmount:0.0389;
+ const posNeed=avgPOSRate>0?needMotivation/(avgPOSRate*Math.max(r.coef,1)):0;
+ const dkNeed=Math.ceil(needMotivation/(5000*Math.max(r.coef,1)));
+ const subsNeed=Math.ceil(needMotivation/(500*Math.max(r.coef,1)));
+ const krhNeed=Math.ceil(needMotivation/(100*Math.max(r.coef,1)));
+
+ return `<div class="money-plan">
+   <div class="mp-title">Чем добить выплату</div>
+   <div class="mp-big">не хватает ${money(gapNet)} на руки</div>
+   <div class="mp-sub">Это не вместо KPI 120%. Это добор денег после KPI и закрытия дыр ЧП.</div>
+   <div class="money-plan-grid">
+     <div class="money-option"><div class="k">Через POS</div><div class="v">≈ ${money(posNeed)}</div><div class="s">по средней POS ставке</div></div>
+     <div class="money-option"><div class="k">Через ДК</div><div class="v">≈ ${dkNeed} шт.</div><div class="s">если до 5 000 ₽ за ДК</div></div>
+     <div class="money-option"><div class="k">Подписки</div><div class="v">≈ ${subsNeed} шт.</div><div class="s">как доп. вариант</div></div>
+     <div class="money-option"><div class="k">КРХ</div><div class="v">≈ ${krhNeed} шт.</div><div class="s">не основной способ</div></div>
+   </div>
+ </div>`;
+}
+
+function renderPriorityBlock(r,t,m){
+ const items=[];
+ if(t.need.ctkAmount>0) items.push({t:'ЦТК '+money(t.need.ctkAmount),s:'закрыть KPI 120% и сильную страту'});
+ if(t.need.posPieces>0) items.push({t:'POS шт. +'+t.need.posPieces,s:'нужно для ЧП / KPI'});
+ if(t.need.dkPieces>0) items.push({t:'ДК +'+t.need.dkPieces+' шт.',s:'убрать штраф ЧП и дать премию'});
+ if(t.need.krh>0) items.push({t:'КРХ +'+t.need.krh+' шт.',s:'закрыть плановую дыру'});
+ if(t.need.subs>0) items.push({t:'Подписки +'+t.need.subs+' шт.',s:'закрыть плановую дыру'});
+ if(t.need.debit>0) items.push({t:'Дебет +'+t.need.debit+' шт.',s:'закрыть плановую дыру'});
+ if(r.protectionPercent<num(state.kpi.planProtection)) items.push({t:'Защита до '+Math.round(state.kpi.planProtection)+'%',s:'убрать штраф ЧП'});
+ const top=items.slice(0,4);
+ return `<div class="money-plan">
+   <div class="mp-title">Порядок действий</div>
+   <div class="mp-big">сначала дыры, потом деньги</div>
+   <div class="priority-list">${top.map((x,i)=>`<div class="priority-row"><div class="num">${i+1}</div><div><div class="txt">${x.t}</div><div class="sub">${x.s}</div></div></div>`).join('')}</div>
+ </div>`;
 }
 
 function renderManualPlanBlock(r,t,m){
@@ -875,11 +943,11 @@ function renderManualPlanBlock(r,t,m){
     </div>
 
     <details class="goal-details">
-      <summary>Показать остаток до KPI плана</summary>
+      <summary>Подробно: остаток до KPI 120%</summary>
       <div class="goal-details-body">
         <div class="mix-title">Остаток до ${m.percent}%</div>
         <div class="mix-grid">${renderCards(remain)}</div>
-        <div class="mix-title" style="margin-top:12px">Что влияет на страту</div>
+        <div class="mix-title" style="margin-top:12px">Детали по страте</div>
         <div class="mix-grid">${renderCards(first.items)}</div>
       </div>
     </details>
