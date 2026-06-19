@@ -71,7 +71,16 @@ details.dashboard-details .details-body{padding:0 17px 17px}
 .priority-row{display:flex;gap:9px;align-items:flex-start;background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px}
 .priority-row .num{min-width:24px;height:24px;border-radius:50%;background:#f0e2bd;display:grid;place-items:center;font-weight:900;font-size:12px}
 .priority-row .txt{font-size:13px;font-weight:800}
-.priority-row .sub{font-size:11px;color:var(--muted);margin-top:2px}
+.priority-row .sub{font-size:11px;color:var(--muted);margin-top:2px}.roadmap{display:grid;gap:10px;margin-top:12px}
+.route-card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:15px}
+.route-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.route-num{min-width:30px;height:30px;border-radius:50%;background:#f0e2bd;display:grid;place-items:center;font-weight:950}
+.route-title{font-size:20px;font-weight:950;letter-spacing:-.2px;margin-top:6px}
+.route-sub{font-size:12px;color:var(--muted);line-height:1.35;margin-top:5px}
+.route-value{font-size:20px;font-weight:950;text-align:right}
+.route-badge{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:7px 10px;font-size:12px;font-weight:850;background:#fbfaf7;margin:8px 5px 0 0}
+.route-card.money{background:#fff8ec}.route-card.ok{background:#f4fbf6}.mini-two{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.mini-box{background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px}.mini-box .k{font-size:11px;color:var(--muted)}.mini-box .v{font-size:16px;font-weight:900;margin-top:3px}
+
 
 
 .goal-details{margin-top:10px;border:1px solid var(--line);border-radius:18px;background:#fff;overflow:hidden}
@@ -91,7 +100,7 @@ details.dashboard-details .details-body{padding:0 17px 17px}
 </head>
 <body>
 <div class="app">
-<header><div><h1>Калькулятор премии</h1><div class="sub">главная — итоговая выплата и фокус</div></div><div class="pill">v5.45</div></header>
+<header><div><h1>Калькулятор премии</h1><div class="sub">главная — итоговая выплата и фокус</div></div><div class="pill">v5.46</div></header>
 <main>
 <div id="view-main" class="view active">
   <div class="hero">
@@ -901,57 +910,80 @@ function renderPriorityBlock(r,t,m){
 
 function renderManualPlanBlock(r,t,m){
  const desired=num(state.kpi.desiredNet)||120000;
- const currentNet=payrollEstimate(r.total).net;
- const goalGap=Math.max(0,desired-m.net);
+ const gapAfterKPI=Math.max(0,desired-m.net);
 
  const renderCards = items => items.length
     ? items.slice(0,10).map(x=>`<div class="mix-card main"><div class="t">${x.name}</div><div class="b">${x.value}</div><div class="s">${x.helper}</div></div>`).join('')
-    : `<div class="mix-card main"><div class="t">KPI план</div><div class="b">закрыт</div><div class="s">по текущим данным</div></div>`;
+    : `<div class="mix-card main"><div class="t">План</div><div class="b">закрыт</div><div class="s">по текущим данным</div></div>`;
 
  const remain=[];
- if(t.need.posAmount>0) remain.push({name:'POS сумма', value:'+'+money(t.need.posAmount), helper:'остаток до KPI плана'});
- if(t.need.ctkAmount>0) remain.push({name:'ЦТК', value:'+'+money(t.need.ctkAmount), helper:'остаток до KPI плана'});
- if(t.need.posPieces>0) remain.push({name:'POS шт.', value:'+'+t.need.posPieces, helper:'остаток'});
+ if(t.need.ctkAmount>0) remain.push({name:'ЦТК', value:'+'+money(t.need.ctkAmount), helper:'остаток до KPI 120%'});
+ if(t.need.posPieces>0) remain.push({name:'POS шт.', value:'+'+t.need.posPieces, helper:'остаток до KPI 120%'});
+ if(t.need.posAmount>0) remain.push({name:'POS сумма', value:'+'+money(t.need.posAmount), helper:'остаток до KPI 120%'});
  if(t.need.dkPieces>0) remain.push({name:'ДК', value:'+'+t.need.dkPieces+' шт.', helper:'остаток'});
  if(t.need.krh>0) remain.push({name:'КРХ', value:'+'+t.need.krh+' шт.', helper:'остаток'});
  if(t.need.subs>0) remain.push({name:'Подписки', value:'+'+t.need.subs+' шт.', helper:'остаток'});
  if(t.need.debit>0) remain.push({name:'Дебет', value:'+'+t.need.debit+' шт.', helper:'остаток'});
 
- const first=firstStrataTarget(r);
- const topFirst=first.items.slice(0,3);
- const chips=topFirst.length
-  ? `<div class="compact-chips">${topFirst.map(x=>`<span class="compact-chip">${x.name} ${x.value}</span>`).join('')}</div>`
-  : `<div class="compact-chips"><span class="compact-chip">крупных дыр нет</span></div>`;
+ const chp=[];
+ if(r.dkPieces<2) chp.push({name:'ДК для ЧП', value:'+'+(2-r.dkPieces)+' шт.', helper:'убрать штраф ЧП'});
+ if(r.protectionPercent<num(state.kpi.planProtection)) chp.push({name:'Защита', value:'до '+Math.round(state.kpi.planProtection)+'%', helper:'убрать штраф ЧП'});
+ if(r.subs<num(state.kpi.planSubs)) chp.push({name:'Подписки', value:'+'+(state.kpi.planSubs-r.subs)+' шт.', helper:'закрыть ЧП'});
+ if(r.debit<num(state.kpi.planDebit)) chp.push({name:'Дебет', value:'+'+(state.kpi.planDebit-r.debit)+' шт.', helper:'закрыть ЧП'});
+ if(r.krh<num(state.kpi.planKRH)) chp.push({name:'КРХ', value:'+'+(state.kpi.planKRH-r.krh)+' шт.', helper:'закрыть ЧП'});
+ if(r.posPieces<num(state.kpi.planPOSPieces)) chp.push({name:'POS шт.', value:'+'+(state.kpi.planPOSPieces-r.posPieces), helper:'закрыть ЧП'});
 
- return `<div class="goal-steps-compact">
-    <div class="goal-step">
-      <div class="step-label">Основная карта KPI</div>
-      <div class="step-main">держать ${m.percent}%</div>
-      <div class="step-sub">Это фиксированная цель по основной карте. Новые выдачи уменьшают только остаток до неё.</div>
-      <div class="plan-summary-grid">
-        <div class="plan-summary-cell"><div class="k">KPI цель</div><div class="v">${m.percent}%</div></div>
-        <div class="plan-summary-cell"><div class="k">На руки при KPI</div><div class="v">${money(m.net)}</div></div>
-        <div class="plan-summary-cell ${goalGap>0?'warn':'good'} full"><div class="k">До 120 000 ₽ после KPI ${m.percent}%</div><div class="v">${goalGap>0?'−'+money(goalGap):'цель закрыта'}</div></div>
-      </div>
-    </div>
+ const topKPI=remain.slice(0,3);
+ const topCHP=chp.slice(0,3);
 
-    <div class="goal-step">
-      <div class="step-label">Сначала</div>
-      <div class="step-main">усилить страту</div>
-      <div class="step-sub">Коэффициент влияет на итоговую премию.</div>
-      ${chips}
-    </div>
+ const region=num(state.kpi.regionCoef)/100;
+ const north=num(state.kpi.northCoef)/100;
+ const tax=num(state.kpi.ndflRate)/100;
+ const netFactor=(1+region+north)*(1-tax);
+ const needMotivation=netFactor>0?gapAfterKPI/netFactor:gapAfterKPI;
+ const avgPOSRate=r.ownPOSAmount>0?r.posPremium/r.ownPOSAmount:0.0389;
+ const posNeed=avgPOSRate>0?needMotivation/(avgPOSRate*Math.max(r.coef,1)):0;
+ const dkNeed=Math.ceil(needMotivation/(5000*Math.max(r.coef,1)));
+ const mixedPOS=Math.max(0,posNeed*0.5);
+ const mixedDK=Math.max(0,Math.ceil(dkNeed/2));
 
-    <details class="goal-details">
-      <summary>Подробно: остаток до KPI 120%</summary>
-      <div class="goal-details-body">
-        <div class="mix-title">Остаток до ${m.percent}%</div>
-        <div class="mix-grid">${renderCards(remain)}</div>
-        <div class="mix-title" style="margin-top:12px">Детали по страте</div>
-        <div class="mix-grid">${renderCards(first.items)}</div>
-      </div>
-    </details>
-  </div>`;
+ return `<div class="roadmap">
+   <div class="route-card">
+     <div class="route-top"><div class="route-num">1</div><div class="route-value">${m.percent}%</div></div>
+     <div class="route-title">Закрыть KPI</div>
+     <div class="route-sub">Минимум по основной карте — 120%. Это база для сильной страты.</div>
+     ${topKPI.map(x=>`<span class="route-badge">${x.name} ${x.value}</span>`).join('') || '<span class="route-badge">KPI закрыт</span>'}
+   </div>
+
+   <div class="route-card">
+     <div class="route-top"><div class="route-num">2</div><div class="route-value">ЧП</div></div>
+     <div class="route-title">Убрать штрафы</div>
+     <div class="route-sub">Даже при KPI 120% штрафы ЧП могут испортить итоговую страту и коэффициент.</div>
+     ${topCHP.map(x=>`<span class="route-badge">${x.name} ${x.value}</span>`).join('') || '<span class="route-badge">крупных штрафов нет</span>'}
+   </div>
+
+   <div class="route-card money">
+     <div class="route-top"><div class="route-num">3</div><div class="route-value">${gapAfterKPI>0?'−'+money(gapAfterKPI):'✓'}</div></div>
+     <div class="route-title">${gapAfterKPI>0?'Добить деньги':'Цель закрыта'}</div>
+     <div class="route-sub">${gapAfterKPI>0?`После KPI ${m.percent}% до ${money(desired)} не хватает примерно ${money(gapAfterKPI)} на руки. Добор можно делать не одним продуктом.`:`При KPI ${m.percent}% расчёт уже даёт нужную выплату.`}</div>
+     ${gapAfterKPI>0?`<div class="mini-two">
+       <div class="mini-box"><div class="k">Через POS</div><div class="v">≈ ${money(posNeed)}</div></div>
+       <div class="mini-box"><div class="k">Через ДК</div><div class="v">≈ ${dkNeed} шт.</div></div>
+       <div class="mini-box"><div class="k">Смешанно</div><div class="v">POS ${money(mixedPOS)}</div></div>
+       <div class="mini-box"><div class="k">+ ДК</div><div class="v">${mixedDK} шт.</div></div>
+     </div>`:''}
+   </div>
+
+   <details class="goal-details">
+     <summary>Подробный расчёт по планам</summary>
+     <div class="goal-details-body">
+       <div class="mix-title">Остаток до KPI ${m.percent}%</div>
+       <div class="mix-grid">${renderCards(remain)}</div>
+       <div class="mix-title" style="margin-top:12px">Дыры ЧП</div>
+       <div class="mix-grid">${renderCards(chp)}</div>
+     </div>
+   </details>
+ </div>`;
 }
 
 function renderPOS(){
