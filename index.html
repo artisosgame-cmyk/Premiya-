@@ -52,7 +52,14 @@ details.dashboard-details .details-body{padding:0 17px 17px}
 .goal-step{background:#fbfaf7;border:1px solid var(--line);border-radius:18px;padding:14px}
 .goal-step .step-label{font-size:12px;color:var(--muted);font-weight:800}
 .goal-step .step-main{font-size:21px;font-weight:900;margin-top:4px;letter-spacing:-.2px}
-.goal-step .step-sub{font-size:12px;color:var(--muted);line-height:1.35;margin-top:5px}
+.goal-step .step-sub{font-size:12px;color:var(--muted);line-height:1.35;margin-top:5px}.plan-summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.plan-summary-cell{background:#fff;border:1px solid var(--line);border-radius:15px;padding:11px}
+.plan-summary-cell .k{font-size:11px;color:var(--muted)}
+.plan-summary-cell .v{font-size:17px;font-weight:900;margin-top:3px}
+.plan-summary-cell.full{grid-column:1/-1}
+.plan-summary-cell.warn{background:#fff8ec}
+.plan-summary-cell.good{background:#f4fbf6}
+
 .goal-details{margin-top:10px;border:1px solid var(--line);border-radius:18px;background:#fff;overflow:hidden}
 .goal-details summary{list-style:none;padding:13px 14px;font-weight:850;cursor:pointer;color:#2b2823}
 .goal-details summary::-webkit-details-marker{display:none}
@@ -70,7 +77,7 @@ details.dashboard-details .details-body{padding:0 17px 17px}
 </head>
 <body>
 <div class="app">
-<header><div><h1>Калькулятор премии</h1><div class="sub">главная — итоговая выплата и фокус</div></div><div class="pill">v5.42</div></header>
+<header><div><h1>Калькулятор премии</h1><div class="sub">главная — итоговая выплата и фокус</div></div><div class="pill">v5.44</div></header>
 <main>
 <div id="view-main" class="view active">
   <div class="hero">
@@ -93,7 +100,7 @@ details.dashboard-details .details-body{padding:0 17px 17px}
         <div class="amount" id="incomeTarget">0 ₽</div>
       </div>
       <div style="text-align:right">
-        <div class="title">План месяца</div>
+        <div class="title">KPI план</div>
         <div class="amount" id="targetBadge">—</div>
       </div>
     </div>
@@ -189,7 +196,7 @@ details.dashboard-details .details-body{padding:0 17px 17px}
 <div class="section-title"><h2>Прогноз</h2><span class="small">общие настройки</span></div>
 <div class="form-grid">
   <div><label>Прогноз, %</label><input id="targetPercent" type="number"></div>
-  <div><label>Выбранный план месяца, %</label><input id="monthPlanPercent" type="number"></div>
+  <div><label>KPI план месяца, %</label><input id="monthPlanPercent" type="number"></div>
   <div><label>Оклад, ₽</label><input id="salary" type="number"></div>
   <div><label>Хочу на руки всего, ₽</label><input id="desiredNet" type="number"></div>
   <div><label>Районный коэффициент, %</label><input id="regionCoef" type="number"></div>
@@ -707,8 +714,8 @@ function renderIncomeNeedCards(r,t,g){
     : `<div class="compact-chips"><span class="compact-chip">крупных дыр нет</span></div>`;
 
   const remain=[];
-  if(fixedT.need.posAmount>0) remain.push({name:'POS сумма', value:'+'+money(fixedT.need.posAmount), helper:'остаток до выбранного плана'});
-  if(fixedT.need.ctkAmount>0) remain.push({name:'ЦТК', value:'+'+money(fixedT.need.ctkAmount), helper:'остаток до выбранного плана'});
+  if(fixedT.need.posAmount>0) remain.push({name:'POS сумма', value:'+'+money(fixedT.need.posAmount), helper:'остаток до KPI плана'});
+  if(fixedT.need.ctkAmount>0) remain.push({name:'ЦТК', value:'+'+money(fixedT.need.ctkAmount), helper:'остаток до KPI плана'});
   if(fixedT.need.posPieces>0) remain.push({name:'POS шт.', value:'+'+fixedT.need.posPieces, helper:'остаток'});
   if(fixedT.need.dkPieces>0) remain.push({name:'ДК', value:'+'+fixedT.need.dkPieces+' шт.', helper:'остаток'});
   if(fixedT.need.krh>0) remain.push({name:'КРХ', value:'+'+fixedT.need.krh+' шт.', helper:'остаток'});
@@ -722,7 +729,7 @@ function renderIncomeNeedCards(r,t,g){
 
   return `<div class="goal-steps-compact">
     <div class="goal-step">
-      <div class="step-label">Выбранный план месяца</div>
+      <div class="step-label">KPI план месяца</div>
       <div class="step-main">держать ${month.percent}%</div>
       <div class="step-sub">${enoughText}</div>
     </div>
@@ -735,7 +742,7 @@ function renderIncomeNeedCards(r,t,g){
     </div>
 
     <details class="goal-details">
-      <summary>Показать остаток до выбранного плана</summary>
+      <summary>Показать остаток до KPI плана</summary>
       <div class="goal-details-body">
         <div class="mix-title">Остаток до ${month.percent}%</div>
         <div class="mix-grid">${remainHtml}</div>
@@ -758,8 +765,8 @@ function renderIncomeGoal(r,t){
   const needed=neededPercentForDesiredNet(r);
   const msg = g.netGap>0
     ? (month.reachable
-      ? `Выбранный план ${month.percent}% закрывает цель. После выдач меняется только остаток.`
-      : `Выбранный план ${month.percent}% не закрывает цель. Нужный ориентир: ${needed.reachable ? needed.percent+"%" : "выше 220%"}.`)
+      ? `KPI план ${month.percent}% закрывает цель. После выдач меняется только остаток.`
+      : `KPI план ${month.percent}% не закрывает цель. Нужный ориентир: ${needed.reachable ? needed.percent+"%" : "выше 220%"}.`)
     : `По текущему расчёту цель ${money(g.desired)} на руки уже закрыта.`;
   setText("incomeAction", msg);
   setHTML("incomeNeedGrid", renderIncomeNeedCards(r,t,g));
@@ -772,7 +779,6 @@ function renderMain(){
  const k=state.kpi;
  const desired=num(k.desiredNet)||120000;
  const gap=Math.max(desired-payrollEstimate(r.total).net,0);
- const needed=neededPlanHint(r);
 
  setText("totalPremium",money(r.total));
  setText("formulaText",`${money(r.base)} × ${r.coef.toFixed(2)} + ${money(r.expert)}`);
@@ -795,12 +801,12 @@ function renderMain(){
  setClass("incomeGapTop","v "+(gap>0?"bad":"ok"));
 
  const enoughText = m.reachable
-   ? `Выбранный план ${m.percent}% закрывает цель: примерно ${money(m.net)} на руки.`
-   : `Выбранный план ${m.percent}% даёт примерно ${money(m.net)} на руки. Для цели нужен ориентир ${needed?needed+"%":"выше 220%"}.`;
+   ? `План KPI ${m.percent}% закрывает цель: примерно ${money(m.net)} на руки.`
+   : `План KPI ${m.percent}% даёт ${money(m.net)} на руки. Ниже — что закрыть по ЧП и сколько не хватает до цели.`;
  setText("incomeAction",enoughText);
- setText("targetComment",`Выбранный план месяца: ${m.percent}%. После выдач меняется только остаток до него.`);
+ setText("targetComment",`KPI план: ${m.percent}%. После выдач меняется только остаток до него.`);
 
- setHTML("incomeNeedGrid", renderManualPlanBlock(r,t,m,needed));
+ setHTML("incomeNeedGrid", renderManualPlanBlock(r,t,m));
  setHTML("mainKpiList", renderMainKpiRows(r,t));
  setText("mainKpiSummary", `Сумма страт KPI: ${r.mainSum} → основная страта ${r.mainStrata}`);
  setHTML("chpList", renderChpRows(r));
@@ -816,7 +822,7 @@ function renderMain(){
  if(t.need.krh>0) parts.push(`КРХ: +${t.need.krh}`);
  if(t.need.subs>0) parts.push(`Подписки: +${t.need.subs}`);
  if(t.need.debit>0) parts.push(`Дебет: +${t.need.debit}`);
- setHTML("needList", parts.length ? parts.slice(0,3).map((x,i)=>`<div class="reco"><div class="dot">${i+1}</div><div>${x}</div></div>`).join("") : `<div class="hint">Выбранный план месяца закрыт по текущим данным.</div>`);
+ setHTML("needList", parts.length ? parts.slice(0,3).map((x,i)=>`<div class="reco"><div class="dot">${i+1}</div><div>${x}</div></div>`).join("") : `<div class="hint">KPI план месяца закрыт по текущим данным.</div>`);
 
  setText("sumPOSPremium",money(r.posPremium));
  setText("sumProductsPremium",money(r.productsPremium));
@@ -825,14 +831,18 @@ function renderMain(){
  renderPayroll(r,{...t,total:m.total});
 }
 
-function renderManualPlanBlock(r,t,m,needed){
+function renderManualPlanBlock(r,t,m){
+ const desired=num(state.kpi.desiredNet)||120000;
+ const currentNet=payrollEstimate(r.total).net;
+ const goalGap=Math.max(0,desired-m.net);
+
  const renderCards = items => items.length
     ? items.slice(0,10).map(x=>`<div class="mix-card main"><div class="t">${x.name}</div><div class="b">${x.value}</div><div class="s">${x.helper}</div></div>`).join('')
-    : `<div class="mix-card main"><div class="t">План месяца</div><div class="b">закрыт</div><div class="s">по текущим данным</div></div>`;
+    : `<div class="mix-card main"><div class="t">KPI план</div><div class="b">закрыт</div><div class="s">по текущим данным</div></div>`;
 
  const remain=[];
- if(t.need.posAmount>0) remain.push({name:'POS сумма', value:'+'+money(t.need.posAmount), helper:'остаток до выбранного плана'});
- if(t.need.ctkAmount>0) remain.push({name:'ЦТК', value:'+'+money(t.need.ctkAmount), helper:'остаток до выбранного плана'});
+ if(t.need.posAmount>0) remain.push({name:'POS сумма', value:'+'+money(t.need.posAmount), helper:'остаток до KPI плана'});
+ if(t.need.ctkAmount>0) remain.push({name:'ЦТК', value:'+'+money(t.need.ctkAmount), helper:'остаток до KPI плана'});
  if(t.need.posPieces>0) remain.push({name:'POS шт.', value:'+'+t.need.posPieces, helper:'остаток'});
  if(t.need.dkPieces>0) remain.push({name:'ДК', value:'+'+t.need.dkPieces+' шт.', helper:'остаток'});
  if(t.need.krh>0) remain.push({name:'КРХ', value:'+'+t.need.krh+' шт.', helper:'остаток'});
@@ -845,24 +855,27 @@ function renderManualPlanBlock(r,t,m,needed){
   ? `<div class="compact-chips">${topFirst.map(x=>`<span class="compact-chip">${x.name} ${x.value}</span>`).join('')}</div>`
   : `<div class="compact-chips"><span class="compact-chip">крупных дыр нет</span></div>`;
 
- const status = m.reachable
-   ? `При ${m.percent}% цель закрывается.`
-   : `При ${m.percent}% не хватает. Нужный ориентир: ${needed?needed+"%":"выше 220%"}.`;
-
  return `<div class="goal-steps-compact">
     <div class="goal-step">
-      <div class="step-label">Выбранный план месяца</div>
+      <div class="step-label">Основная карта KPI</div>
       <div class="step-main">держать ${m.percent}%</div>
-      <div class="step-sub">${status}</div>
+      <div class="step-sub">Это фиксированная цель по основной карте. Новые выдачи уменьшают только остаток до неё.</div>
+      <div class="plan-summary-grid">
+        <div class="plan-summary-cell"><div class="k">KPI цель</div><div class="v">${m.percent}%</div></div>
+        <div class="plan-summary-cell"><div class="k">На руки при KPI</div><div class="v">${money(m.net)}</div></div>
+        <div class="plan-summary-cell ${goalGap>0?'warn':'good'} full"><div class="k">До 120 000 ₽ после KPI ${m.percent}%</div><div class="v">${goalGap>0?'−'+money(goalGap):'цель закрыта'}</div></div>
+      </div>
     </div>
+
     <div class="goal-step">
       <div class="step-label">Сначала</div>
       <div class="step-main">усилить страту</div>
       <div class="step-sub">Коэффициент влияет на итоговую премию.</div>
       ${chips}
     </div>
+
     <details class="goal-details">
-      <summary>Показать остаток до выбранного плана</summary>
+      <summary>Показать остаток до KPI плана</summary>
       <div class="goal-details-body">
         <div class="mix-title">Остаток до ${m.percent}%</div>
         <div class="mix-grid">${renderCards(remain)}</div>
