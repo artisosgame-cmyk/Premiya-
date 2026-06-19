@@ -91,7 +91,26 @@ details.dashboard-details .details-body{padding:0 17px 17px}
 .simple-status{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px}
 .simple-status .st{border:1px solid var(--line);border-radius:14px;padding:10px;background:#fff}
 .simple-status .st .k{font-size:10px;color:var(--muted)}
-.simple-status .st .v{font-size:14px;font-weight:950;margin-top:3px}
+.simple-status .st .v{font-size:14px;font-weight:950;margin-top:3px}.goal-progress{background:#fff;border:1px solid var(--line);border-radius:20px;padding:15px;margin-top:12px}
+.goal-progress .gp-label{font-size:12px;color:var(--muted);font-weight:850}
+.goal-progress .gp-big{font-size:26px;font-weight:950;margin-top:4px}
+.progress-bar{height:12px;border-radius:999px;background:#eee6d8;overflow:hidden;margin-top:12px}
+.progress-fill{height:100%;background:#1f1b16;border-radius:999px}
+.gp-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.gp-box{border:1px solid var(--line);border-radius:15px;padding:11px;background:#fbfaf7}
+.gp-box .k{font-size:11px;color:var(--muted)}
+.gp-box .v{font-size:17px;font-weight:950;margin-top:3px}
+.answer-card{background:#f4fbf6;border:1px solid var(--line);border-radius:20px;padding:15px;margin-top:12px}
+.answer-title{font-size:20px;font-weight:950}
+.answer-sub{font-size:12px;color:var(--muted);line-height:1.35;margin-top:5px}
+.answer-list{display:grid;gap:8px;margin-top:12px}
+.answer-item{display:flex;justify-content:space-between;gap:10px;background:#fff;border:1px solid var(--line);border-radius:15px;padding:11px;align-items:center}
+.answer-item .a-left{font-size:13px;font-weight:850}
+.answer-item .a-right{font-size:16px;font-weight:950}
+.attention{background:#fff8ec;border:1px solid var(--line);border-radius:20px;padding:15px;margin-top:12px}
+.attention .title{font-size:18px;font-weight:950}
+.attention .sub{font-size:12px;color:var(--muted);line-height:1.35;margin-top:5px}
+
 .mini-two{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.mini-box{background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px}.mini-box .k{font-size:11px;color:var(--muted)}.mini-box .v{font-size:16px;font-weight:900;margin-top:3px}
 
 
@@ -113,7 +132,7 @@ details.dashboard-details .details-body{padding:0 17px 17px}
 </head>
 <body>
 <div class="app">
-<header><div><h1>Калькулятор премии</h1><div class="sub">главная — итоговая выплата и фокус</div></div><div class="pill">v5.47</div></header>
+<header><div><h1>Калькулятор премии</h1><div class="sub">главная — итоговая выплата и фокус</div></div><div class="pill">v5.48</div></header>
 <main>
 <div id="view-main" class="view active">
   <div class="hero">
@@ -924,8 +943,9 @@ function renderPriorityBlock(r,t,m){
 function renderManualPlanBlock(r,t,m){
  const desired=num(state.kpi.desiredNet)||120000;
  const currentNet=payrollEstimate(r.total).net;
- const gapAfterKPI=Math.max(0,desired-m.net);
  const gapNow=Math.max(0,desired-currentNet);
+ const gapAfterKPI=Math.max(0,desired-m.net);
+ const progress=Math.min(100,Math.round((currentNet/desired)*100));
 
  const renderCards = items => items.length
     ? items.slice(0,10).map(x=>`<div class="mix-card main"><div class="t">${x.name}</div><div class="b">${x.value}</div><div class="s">${x.helper}</div></div>`).join('')
@@ -953,51 +973,57 @@ function renderManualPlanBlock(r,t,m){
  const avgPOSRate=r.ownPOSAmount>0?r.posPremium/r.ownPOSAmount:0.0389;
  const posNeed=avgPOSRate>0?needMotivation/(avgPOSRate*coef):0;
  const dkNeed=Math.max(0,Math.ceil(needMotivation/(5000*coef)));
- const subsNeed=Math.max(0,Math.ceil(needMotivation/(500*coef)));
- const krhNeed=Math.max(0,Math.ceil(needMotivation/(100*coef)));
+ const mixedPOS=Math.max(0,posNeed*0.5);
+ const mixedDK=Math.max(0,Math.ceil(dkNeed/2));
 
- const topKPI=kpi.slice(0,3);
- const topCHP=chp.slice(0,3);
- const recommended = gapAfterKPI>0
-   ? `<div class="action-hero">
-       <div class="label">До 120 000 ₽ после KPI ${m.percent}%</div>
-       <div class="big">не хватает ${money(gapAfterKPI)}</div>
-       <div class="sub">Самый понятный рабочий вариант — добрать через ДК и закрыть штрафы ЧП.</div>
-       <div class="action-plan">
-         <div class="action-line good"><div class="left">🥇 Рекомендуемый вариант</div><div class="right">ДК +${dkNeed} шт.</div></div>
-         ${r.protectionPercent<num(state.kpi.planProtection)?`<div class="action-line warn"><div class="left">Параллельно убрать штраф</div><div class="right">Защита до ${Math.round(state.kpi.planProtection)}%</div></div>`:''}
-         ${r.subs<num(state.kpi.planSubs)?`<div class="action-line"><div class="left">Добрать ЧП</div><div class="right">Подписки +${state.kpi.planSubs-r.subs}</div></div>`:''}
-         <div class="action-line"><div class="left">Альтернатива через POS</div><div class="right">≈ ${money(posNeed)}</div></div>
-       </div>
-     </div>`
-   : `<div class="action-hero"><div class="label">До 120 000 ₽</div><div class="big">цель закрыта</div><div class="sub">При KPI ${m.percent}% расчёт уже даёт нужную выплату.</div></div>`;
+ const answerItems=[];
+ kpi.slice(0,2).forEach(x=>answerItems.push({l:x.name,r:x.value}));
+ chp.slice(0,3).forEach(x=>answerItems.push({l:x.name,r:x.value}));
+ if(gapAfterKPI>0) answerItems.push({l:'Добрать выплату',r:'ДК +'+dkNeed+' шт.'});
 
- return `<div class="roadmap">
-   <div class="simple-status">
-     <div class="st"><div class="k">KPI</div><div class="v">${m.percent}%</div></div>
-     <div class="st"><div class="k">ЧП</div><div class="v">${chp.length?'дыры':'ок'}</div></div>
-     <div class="st"><div class="k">До цели</div><div class="v">${gapAfterKPI>0?'−'+money(gapAfterKPI):'✓'}</div></div>
+ return `<div class="goal-progress">
+   <div class="gp-label">Цель месяца</div>
+   <div class="gp-big">${money(desired)} на руки</div>
+   <div class="progress-bar"><div class="progress-fill" style="width:${progress}%"></div></div>
+   <div class="gp-row">
+     <div class="gp-box"><div class="k">Сейчас</div><div class="v">${money(currentNet)}</div></div>
+     <div class="gp-box"><div class="k">После KPI ${m.percent}%</div><div class="v">${money(m.net)}</div></div>
+     <div class="gp-box"><div class="k">Осталось сейчас</div><div class="v">${money(gapNow)}</div></div>
+     <div class="gp-box"><div class="k">После KPI останется</div><div class="v">${money(gapAfterKPI)}</div></div>
    </div>
+ </div>
 
+ <div class="answer-card">
+   <div class="answer-title">Что сделать для 120 000 ₽</div>
+   <div class="answer-sub">Короткий рабочий план: сначала KPI, потом ЧП, потом добор выплаты.</div>
+   <div class="answer-list">
+     ${answerItems.map(x=>`<div class="answer-item"><div class="a-left">${x.l}</div><div class="a-right">${x.r}</div></div>`).join('')}
+   </div>
+ </div>
+
+ <div class="roadmap">
    <div class="route-card">
      <div class="route-top"><div class="route-num">1</div><div class="route-value">${m.percent}%</div></div>
      <div class="route-title">Закрыть KPI</div>
      <div class="route-sub">Основная карта — минимум 120%.</div>
-     ${topKPI.map(x=>`<span class="route-badge">${x.name} ${x.value}</span>`).join('') || '<span class="route-badge">KPI закрыт</span>'}
+     ${kpi.slice(0,3).map(x=>`<span class="route-badge">${x.name} ${x.value}</span>`).join('') || '<span class="route-badge">KPI закрыт</span>'}
    </div>
 
-   <div class="route-card">
-     <div class="route-top"><div class="route-num">2</div><div class="route-value">ЧП</div></div>
-     <div class="route-title">Убрать штрафы</div>
-     <div class="route-sub">Это влияет на итоговую страту и коэффициент.</div>
-     ${topCHP.map(x=>`<span class="route-badge">${x.name} ${x.value}</span>`).join('') || '<span class="route-badge">крупных штрафов нет</span>'}
+   <div class="attention">
+     <div class="title">Требует внимания по ЧП</div>
+     <div class="sub">Это влияет на итоговую страту и коэффициент.</div>
+     ${chp.slice(0,4).map(x=>`<span class="route-badge">${x.name} ${x.value}</span>`).join('') || '<span class="route-badge">крупных штрафов нет</span>'}
    </div>
 
    <div class="route-card money">
-     <div class="route-top"><div class="route-num">3</div><div class="route-value">${gapAfterKPI>0?'−'+money(gapAfterKPI):'✓'}</div></div>
-     <div class="route-title">Добить до 120 000 ₽</div>
-     <div class="route-sub">Не формула, а рабочий план: что проще сделать, чтобы закрыть выплату.</div>
-     ${recommended}
+     <div class="route-top"><div class="route-num">3</div><div class="route-value">${gapAfterKPI>0?money(gapAfterKPI):'✓'}</div></div>
+     <div class="route-title">${gapAfterKPI>0?'Добрать выплату':'Цель закрыта'}</div>
+     <div class="route-sub">${gapAfterKPI>0?`После KPI ${m.percent}% ещё нужно добрать ${money(gapAfterKPI)} на руки.`:`При KPI ${m.percent}% расчёт уже даёт нужную выплату.`}</div>
+     ${gapAfterKPI>0?`<div class="action-plan">
+       <div class="action-line good"><div class="left">🥇 Самый понятный вариант</div><div class="right">ДК +${dkNeed} шт.</div></div>
+       <div class="action-line"><div class="left">Альтернатива POS</div><div class="right">≈ ${money(posNeed)}</div></div>
+       <div class="action-line"><div class="left">Смешанно</div><div class="right">POS ${money(mixedPOS)} + ДК ${mixedDK}</div></div>
+     </div>`:''}
    </div>
 
    <details class="goal-details">
@@ -1005,7 +1031,7 @@ function renderManualPlanBlock(r,t,m){
      <div class="goal-details-body">
        <div class="mix-title">Остаток до KPI ${m.percent}%</div>
        <div class="mix-grid">${renderCards(kpi)}</div>
-       <div class="mix-title" style="margin-top:12px">Дыры ЧП</div>
+       <div class="mix-title" style="margin-top:12px">Показатели ЧП</div>
        <div class="mix-grid">${renderCards(chp)}</div>
      </div>
    </details>
